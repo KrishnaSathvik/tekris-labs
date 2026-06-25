@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f2ea;
+  --foreground: #181818;
+  --muted: #6b6560;
+  --border: #e0d9ce;
+  --ivory: #fffaf2;
+  --stone: #d4c9b8;
+  --terracotta: #c45d3e;
+  --terracotta-hover: #a84d32;
+  --dusty-blue: #6b8fad;
+  --muted-yellow: #e8c547;
+  --sand: #e5e0d8;
+  --charcoal: #1a1a1a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-ivory: var(--ivory);
+  --color-stone: var(--stone);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-hover: var(--terracotta-hover);
+  --color-dusty-blue: var(--dusty-blue);
+  --color-muted-yellow: var(--muted-yellow);
+  --color-sand: var(--sand);
+  --color-charcoal: var(--charcoal);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-instrument-serif);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: color-mix(in srgb, var(--terracotta) 25%, transparent);
+}
+
+.section-padding {
+  @apply px-6 py-20 md:px-10 md:py-28 lg:px-16 lg:py-32;
+}
+
+/* Fixed-nav clearance + inner page padding (don't combine with section-padding) */
+.page-offset {
+  @apply pt-20 md:pt-24;
+}
+
+.page-content {
+  @apply px-6 pb-16 pt-6 md:px-10 md:pb-20 md:pt-8 lg:px-16;
+}
+
+.container-narrow {
+  @apply mx-auto max-w-6xl;
+}
+
+.container-wide {
+  @apply mx-auto max-w-7xl;
+}
+
+.grid-canvas {
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.icon-tile {
+  @apply flex items-center justify-center rounded-lg border border-charcoal/20;
+}
+
+.line-icon {
+  @apply stroke-charcoal;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
