@@ -1,18 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f2ea;
-  --foreground: #181818;
-  --muted: #6b6560;
-  --border: #e0d9ce;
-  --ivory: #fffaf2;
-  --stone: #d4c9b8;
-  --terracotta: #c45d3e;
-  --terracotta-hover: #a84d32;
-  --dusty-blue: #6b8fad;
-  --muted-yellow: #e8c547;
-  --sand: #e5e0d8;
-  --charcoal: #1a1a1a;
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --muted: #4b5563;
+  --border: #e5e7eb;
+  --surface: #ffffff;
+  --subtle: #f0f2f5;
+  --line: #d1d5db;
+  --ink: #0a0a0a;
+  /* Text-safe accent (AA on white and surface). */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
 }
 
 @theme inline {
@@ -20,80 +19,138 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
-  --color-ivory: var(--ivory);
-  --color-stone: var(--stone);
-  --color-terracotta: var(--terracotta);
-  --color-terracotta-hover: var(--terracotta-hover);
-  --color-dusty-blue: var(--dusty-blue);
-  --color-muted-yellow: var(--muted-yellow);
-  --color-sand: var(--sand);
-  --color-charcoal: var(--charcoal);
-  --font-sans: var(--font-dm-sans);
-  --font-serif: var(--font-instrument-serif);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --font-sans: var(--font-geist);
+  --font-display: var(--font-geist);
+  --font-mono: var(--font-geist-mono);
 }
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
-  font-size: 1.0625rem;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 1rem;
   line-height: 1.65;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 50;
-  opacity: 0.35;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  font-feature-settings: "ss01", "cv11";
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--terracotta) 25%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-.section-padding {
-  @apply px-6 py-20 md:px-10 md:py-28 lg:px-16 lg:py-32;
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
-/* Fixed-nav clearance + inner page padding (don't combine with section-padding) */
-.page-offset {
-  @apply pt-20 md:pt-24;
+@utility container-page {
+  @apply mx-auto w-full max-w-6xl px-6 md:px-10;
 }
 
-.page-content {
-  @apply px-6 pb-16 pt-6 md:px-10 md:pb-20 md:pt-8 lg:px-16;
+@utility container-prose {
+  @apply mx-auto w-full max-w-3xl px-6 md:px-10;
 }
 
-.container-narrow {
-  @apply mx-auto max-w-6xl;
+@utility section {
+  @apply py-20 md:py-28;
 }
 
-.container-wide {
-  @apply mx-auto max-w-7xl;
+@utility eyebrow {
+  @apply font-mono text-xs font-medium uppercase tracking-[0.14em] text-accent;
 }
 
-.grid-canvas {
+@utility display {
+  @apply font-display text-[2.6rem] font-semibold leading-[1.04] tracking-[-0.045em] text-ink sm:text-5xl md:text-6xl xl:text-7xl;
+}
+
+@utility heading {
+  @apply font-display text-3xl font-semibold leading-[1.1] tracking-[-0.035em] text-ink md:text-[2.5rem];
+}
+
+@utility title {
+  @apply font-display text-lg font-semibold leading-snug tracking-[-0.02em] text-ink;
+}
+
+@utility lede {
+  @apply text-lg leading-relaxed text-muted md:text-xl;
+}
+
+/* Gradient accent for highlighted words in headings. */
+@utility text-gradient {
+  @apply bg-linear-to-r from-[#4f46e5] via-[#7c3aed] to-[#0369a1] bg-clip-text text-transparent;
+}
+
+@utility text-link {
+  @apply text-ink underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent;
+}
+
+@utility card {
+  @apply rounded-2xl border border-border bg-background;
+}
+
+/* Faint grid backdrop for hero areas. */
+@utility bg-grid {
   background-image:
-    linear-gradient(to right, var(--border) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    linear-gradient(to right, rgb(10 10 10 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(10 10 10 / 0.05) 1px, transparent 1px);
   background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black 30%, transparent 75%);
 }
 
-.icon-tile {
-  @apply flex items-center justify-center rounded-lg border border-charcoal/20;
+/* Long-form legal and policy text. */
+@utility prose-doc {
+  @apply text-[0.975rem] leading-[1.75] text-muted;
 }
 
-.line-icon {
-  @apply stroke-charcoal;
-  fill: none;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.prose-doc > section + section {
+  @apply mt-14;
+}
+
+.prose-doc h2 {
+  @apply scroll-mt-28 font-display text-2xl font-semibold tracking-[-0.03em] text-ink;
+}
+
+.prose-doc h3 {
+  @apply mt-8 font-semibold text-ink;
+}
+
+.prose-doc p,
+.prose-doc ul {
+  @apply mt-4;
+}
+
+.prose-doc ul {
+  @apply list-disc space-y-2 pl-5 marker:text-line;
+}
+
+.prose-doc strong {
+  @apply font-medium text-ink;
+}
+
+.prose-doc a {
+  @apply text-link;
 }

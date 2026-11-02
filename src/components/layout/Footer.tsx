@@ -1,50 +1,38 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/layout/LogoMark";
+import { SITE_NAME } from "@/lib/site";
 
-const footerLinks = [
+const links = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
   { label: "Contact", href: "/contact" },
 ];
 
 export function Footer() {
-  const year = new Date().getFullYear();
-
   return (
-    <footer className="border-t border-border bg-ivory">
-      <div className="container-wide section-padding !py-16">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <p className="font-serif text-2xl text-charcoal">Tekris Labs</p>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-muted">
-              Tekris Labs builds subscription-based software products and
-              digital tools for productivity, document creation, content
-              workflows, and business automation.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-muted">
-              Legal &amp; Contact
-            </p>
-            <ul className="mt-4 space-y-3">
-              {footerLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-charcoal transition-colors hover:text-terracotta"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <footer className="mt-auto border-t border-border bg-background">
+      <div className="container-page flex flex-col gap-6 py-10 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="flex items-center gap-2.5 text-[0.95rem] font-semibold tracking-[-0.02em] text-ink">
+            <LogoMark className="h-5 w-auto" />
+            {SITE_NAME}
+          </p>
+          <p className="mt-3 text-xs text-muted">{SITE_NAME}. All rights reserved.</p>
         </div>
-
-        <div className="mt-12 flex flex-col gap-2 border-t border-border pt-8 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; {year} Tekris Labs. All rights reserved.</p>
-          <p>Cloud-based software products delivered online.</p>
-        </div>
+        <nav aria-label="Footer">
+          <ul className="flex flex-wrap gap-x-6 gap-y-1">
+            {links.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="inline-block py-1.5 text-sm text-muted transition-colors hover:text-ink"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </footer>
   );

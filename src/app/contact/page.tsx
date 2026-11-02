@@ -1,75 +1,88 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { ContactForm } from "@/components/ContactForm";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { EMPTY_VALUES, isInquiryType, type ContactValues } from "@/lib/contact";
+import { getProduct, products } from "@/lib/products";
+import { HELLO_EMAIL, SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Contact — Tekris Labs",
+  title: "Contact & Support",
   description:
-    "Get in touch with Tekris Labs for product inquiries, support, or business questions.",
+    "Contact Tekris Labs for product support, privacy questions, feedback, and general inquiries.",
+  alternates: { canonical: "/contact" },
+  openGraph: { url: "/contact" },
 };
 
-export default function ContactPage() {
+const options = [
+  { need: "Product support or technical issues", how: "Use the form" },
+  { need: "Privacy requests", how: "Choose Privacy inquiry" },
+  { need: "General or business inquiries", how: "Choose Business or general inquiry" },
+];
+
+function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ContactPage(props: PageProps<"/contact">) {
+  const params = await props.searchParams;
+  const requestedTopic = first(params.topic) ?? "";
+  const requestedProduct = first(params.product) ?? "";
+  const product = getProduct(requestedProduct);
+
+  const initialValues: ContactValues = {
+    ...EMPTY_VALUES,
+    topic: isInquiryType(requestedTopic) ? requestedTopic : EMPTY_VALUES.topic,
+    product: product?.slug ?? "",
+  };
+
   return (
     <>
-      <Navbar />
-      <main className="flex-1 page-offset">
-        <div className="container-narrow page-content">
-          <Link
-            href="/"
-            className="text-sm text-muted transition-colors hover:text-terracotta"
-          >
-            &larr; Back to home
-          </Link>
+      <PageHeader
+        eyebrow="Contact & Support"
+        title={
+          <>
+            How can we <span className="text-gradient">help?</span>
+          </>
+        }
+      >
+        <p>Send us a message about a product, a privacy request, or anything else.</p>
+      </PageHeader>
 
-          <h1 className="mt-6 font-serif text-4xl tracking-tight text-charcoal md:text-5xl">
-            Get in touch
-          </h1>
-          <p className="mt-4 max-w-lg text-base leading-relaxed text-muted">
-            Reach out for product inquiries, customer support, or general
-            business questions. We typically respond within one to two business
-            days.
-          </p>
+      <div className="container-page py-12 md:py-16">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16">
+          <ContactForm
+            initialValues={initialValues}
+            products={products.map(({ slug, name }) => ({ slug, name }))}
+          />
 
-          <div className="mt-12 grid gap-8 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <ContactForm />
+          <aside className="self-start rounded-2xl border border-border p-6">
+            <h2 className="title">Contact options</h2>
+            <dl className="mt-4 space-y-3 text-sm">
+              {options.map((option) => (
+                <div key={option.need}>
+                  <dt className="font-medium text-ink">{option.need}</dt>
+                  <dd className="text-muted">{option.how}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-6 border-t border-border pt-5 text-sm">
+              <p className="font-medium text-ink">Email</p>
+              <ul className="mt-1">
+                <li>
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-link inline-block py-1">
+                    {SUPPORT_EMAIL}
+                  </a>
+                </li>
+                <li>
+                  <a href={`mailto:${HELLO_EMAIL}`} className="text-link inline-block py-1">
+                    {HELLO_EMAIL}
+                  </a>
+                </li>
+              </ul>
             </div>
-
-            <div className="rounded-2xl border border-border p-8 lg:col-span-2">
-              <p className="text-xs font-medium uppercase tracking-widest text-muted">
-                Business information
-              </p>
-              <dl className="mt-4 space-y-4">
-                <div>
-                  <dt className="text-sm text-muted">Company</dt>
-                  <dd className="mt-1 font-medium text-charcoal">Tekris Labs</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted">Business type</dt>
-                  <dd className="mt-1 font-medium text-charcoal">
-                    Software company
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted">Offering</dt>
-                  <dd className="mt-1 font-medium text-charcoal">
-                    Subscription-based software and digital tools
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted">Delivery</dt>
-                  <dd className="mt-1 font-medium text-charcoal">
-                    Cloud-based web applications
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
+          </aside>
         </div>
-      </main>
-      <Footer />
+      </div>
     </>
   );
 }
