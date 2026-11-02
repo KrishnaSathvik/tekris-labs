@@ -111,8 +111,8 @@ const sections: LegalSection[] = [
             ).
           </li>
           <li>
-            <strong>Google (Gmail)</strong> hosts the mailboxes where messages are received (
-            <a href="https://policies.google.com/privacy" rel="noopener noreferrer">
+            <strong>Apple (iCloud Mail)</strong> hosts the mailboxes where messages are received (
+            <a href="https://www.apple.com/legal/privacy/" rel="noopener noreferrer">
               privacy policy
             </a>
             ).

@@ -5,6 +5,8 @@ import { EMPTY_VALUES, isInquiryType, type ContactValues } from "@/lib/contact";
 import { getProduct, products } from "@/lib/products";
 import { HELLO_EMAIL, SUPPORT_EMAIL } from "@/lib/site";
 
+export const maxDuration = 60;
+
 export const metadata: Metadata = {
   title: "Contact & Support",
   description:

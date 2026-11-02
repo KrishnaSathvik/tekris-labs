@@ -12,6 +12,7 @@ import {
   type FieldErrors,
 } from "@/lib/contact";
 import { getProduct } from "@/lib/products";
+import { SITE_URL } from "@/lib/site";
 
 export type ContactFormState =
   | { status: "idle"; attempt: number; values: ContactValues }
@@ -28,6 +29,8 @@ const MIN_FILL_TIME_MS = 3000;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 5;
 const DUPLICATE_WINDOW_MS = 2 * 60 * 1000;
+// FormSubmit can take close to a minute to respond.
+const DELIVERY_TIMEOUT_MS = 55_000;
 
 // Best-effort, per-instance protection. Serverless instances don't share memory.
 const recentByClient = new Map<string, number[]>();
@@ -136,7 +139,13 @@ export async function submitContactForm(
   try {
     const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(inbox)}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      // FormSubmit rejects requests that don't identify the website they come from.
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Origin: SITE_URL,
+        Referer: `${SITE_URL}/contact`,
+      },
       body: JSON.stringify({
         name: values.name || "(not provided)",
         email: values.email,
@@ -148,7 +157,7 @@ export async function submitContactForm(
         _template: "table",
         _captcha: "false",
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(DELIVERY_TIMEOUT_MS),
       cache: "no-store",
     });
 
