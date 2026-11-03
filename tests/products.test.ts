@@ -31,9 +31,24 @@ describe("product registry", () => {
     }
   });
 
+  it("lists all 19 products", () => {
+    expect(products).toHaveLength(19);
+  });
+
   it("only links to https listing URLs", () => {
     for (const product of products) {
       if (product.listingUrl) expect(product.listingUrl).toMatch(/^https:\/\//);
+    }
+  });
+
+  it("keeps the verified ChatGPT listings and leaves unverified ones unlinked", () => {
+    const unlisted = ["build-mcp-apps-agents", "web-mobile-app-builder", "design-game-studio"];
+    for (const product of products) {
+      if (unlisted.includes(product.slug)) {
+        expect(product.listingUrl, product.slug).toBeUndefined();
+      } else {
+        expect(product.listingUrl, product.slug).toMatch(/^https:\/\/chatgpt\.com\/plugins\/plugins_/);
+      }
     }
   });
 

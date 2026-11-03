@@ -6,11 +6,11 @@ const STORIES: Record<string, ProductStory> = {
     subject: "SQL",
     tagline: "Correct SQL first, fast SQL second.",
     intro:
-      "A dialect-aware SQL assistant that writes, reviews, and tunes queries from the schema, errors, and plans you share. It checks grain, joins, and NULLs before it touches performance.",
+      "A dialect-aware SQL assistant with focused workflows for writing, debugging, translating, testing, and tuning queries. It works from the schema, errors, and plans you share, and checks grain, joins, and NULLs before performance.",
     about: [
-      "SQL Copilot turns plain-language requirements into SQL. It also explains and debugs existing queries, reviews risky data changes, and suggests performance and modeling improvements backed by evidence.",
+      "SQL Copilot turns plain-language requirements into SQL and explains, debugs, and translates existing queries between dialects. It reviews risky writes and schema migrations, designs BI, CDC, and reconciliation logic, and writes test fixtures with expected results.",
       "It’s built for analysts, BI teams, data engineers, platform teams, and application developers. It suits people who work across more than one database engine and can’t afford syntax from the wrong dialect.",
-      "Before writing anything, it settles what one output row represents, how each join can multiply rows, and how NULLs and time boundaries behave. It won’t hide duplicates with DISTINCT, and it won’t optimize a query that is still wrong.",
+      "Before writing anything, it settles what one output row represents, how each join can multiply rows, and how NULLs and time boundaries behave. It won’t hide duplicates with DISTINCT, optimize a query that is still wrong, or call SQL tested without real output.",
     ],
     workflow: {
       title: "A duplicate-contact cleanup needs a DELETE",
@@ -19,23 +19,25 @@ const STORIES: Record<string, ProductStory> = {
       input: {
         label: "Proposed cleanup",
         language: "sql",
-        content:
-          "DELETE FROM customer_contacts c\nUSING customer_contacts d\nWHERE c.email = d.email\n  AND c.contact_id < d.contact_id;",
+        content: `DELETE FROM customer_contacts c
+USING customer_contacts d
+WHERE c.email = d.email
+  AND c.contact_id < d.contact_id;`,
       },
       steps: [
-        "Classifies the statement as high risk and states exactly which rows it can remove.",
+        "Classifies the statement as high risk and states exactly which rows it can remove and whether the change can be reversed.",
         "Tests the duplicate key against case and whitespace in email, NULL emails, and whether the lowest contact_id is really the row to drop. Then it defines a winner and a deterministic tie-breaker.",
-        "Writes a read-only preview that uses the same predicates, with affected-row and distinct-key counts.",
-        "Puts the DELETE in a separate block marked to run only after the preview is validated. The block sits inside a transaction and comes with backup or restore guidance.",
+        "Writes a read-only preview that uses the same predicates, with affected-row counts, distinct-key counts, and checks for rows matched more than once.",
+        "Puts the DELETE in a separate block under an explicit warning, to run only after the preview is validated. It wraps the statement in a transaction and adds backup or restore guidance that fits PostgreSQL.",
       ],
       result:
         "You get a preview query, validation checks, and a guarded DELETE, with its assumptions stated. You run each step and judge the results yourself.",
     },
     expertise: [
       {
-        title: "Dialect fidelity",
+        title: "Dialect translation",
         description:
-          "Native syntax for PostgreSQL, MySQL, SQL Server, Oracle, Snowflake, BigQuery, Redshift, Synapse, and Databricks SQL. It labels the dialect and never mixes two in one query.",
+          "Translates between engines, including PostgreSQL, SQL Server, Oracle, Snowflake, BigQuery, Redshift, and Databricks SQL. Flags features without equivalents and silent changes like Oracle empty strings or integer division.",
       },
       {
         title: "Plan-based tuning",
@@ -43,32 +45,32 @@ const STORIES: Record<string, ProductStory> = {
           "Reads execution plans and query profiles for pruning, spill, shuffles, and scans. It doesn’t promise gains from CTEs, indexes, clustering, or bigger compute without evidence.",
       },
       {
-        title: "BI and semantic models",
+        title: "Schema migration review",
         description:
-          "Explicit grain, stable keys, and relationship-safe outputs for dashboards and marts. Keeps leading zeros, never guesses date formats or time zones, and adds reconciliation checks.",
+          "Plans expand, migrate, and contract steps for breaking changes and checks locks, table rewrites, and backfill cost. It won’t call DDL transactional everywhere or zero-downtime without evidence.",
       },
       {
-        title: "Incremental and CDC logic",
+        title: "SQL security and access",
         description:
-          "Defines watermarks, late-arriving rows, delete semantics, idempotency, and replay. Makes sure a MERGE source can’t ambiguously match the same target row.",
+          "Parameterizes user input, allowlists dynamic identifiers, and reviews least privilege, row and column policies, masking, and GRANT or REVOKE changes. It never bypasses access controls.",
       },
     ],
     working: {
       provide: [
-        "The target platform and version",
+        "The target platform and version, plus the source platform for translations",
         "Table definitions, keys, and a few sample rows",
         "The query, the error message, or a plain-language requirement",
         "Execution plans or query profiles for slow queries",
-        "The intended scope of any data change",
+        "The intended scope of any data or schema change",
       ],
       expect: [
         "One copyable query with only the assumptions that matter",
         "A short explanation of joins, filters, NULL handling, and output grain",
-        "Validation and reconciliation queries",
+        "Validation queries and test fixtures with expected results",
         "Preview-first scripts for UPDATE, DELETE, MERGE, and schema changes",
       ],
       limits:
-        "It doesn’t connect to databases or run SQL. Row counts, results, and plans come from what you paste, and it won’t claim a query was tested unless you share the output.",
+        "It doesn’t connect to databases or run SQL on its own. It works from the schema, rows, and plans you share, and won’t call a query tested or tuned without real output.",
     },
   },
   "production-data-engineering-copilot": {
@@ -76,11 +78,11 @@ const STORIES: Record<string, ProductStory> = {
     subject: "Data Engineering",
     tagline: "Fix production pipelines without losing or duplicating data.",
     intro:
-      "A production-minded assistant for Spark, Databricks, Delta Lake, CDC, Structured Streaming, and Airflow. It works from your logs, plans, and code to one most likely cause and a safe next step.",
+      "A production-minded assistant for Spark, Databricks, Delta Lake, CDC, streaming, Airflow, dbt, and Microsoft Fabric. It works from your logs, plans, and code to a leading hypothesis, one decisive check, and a safe next step.",
     about: [
-      "Data Engineering Copilot helps you design, debug, recover, and tune data pipelines. It covers batch, CDC, streaming, and lakehouse systems, along with backfills, data quality, and observability.",
+      "Data Engineering Copilot helps you design, build, debug, recover, and tune data pipelines. It covers batch, CDC, streaming, lakehouse, and warehouse systems, plus dbt models, backfills, data quality, observability, governance, and platform migrations.",
       "It’s written for data engineers and platform owners who run pipelines with SLAs, downstream consumers, and real recovery costs. Simple syntax or concept questions get a direct answer.",
-      "For incidents, it names one dominant hypothesis with a confidence level and keeps facts, assumptions, and unknowns apart. It ranks risk in this order: data loss, then correctness, recovery, SLA, and cost. It doesn’t reach for bigger clusters by default.",
+      "For incidents, it states a leading hypothesis with a confidence level and the observation that would disprove it, and keeps facts, assumptions, and unknowns apart. Correctness and recoverability come before performance and cost. It doesn’t reach for bigger clusters by default.",
     ],
     workflow: {
       title: "Silver rows double after an Airflow retry",
@@ -89,12 +91,15 @@ const STORIES: Record<string, ProductStory> = {
       input: {
         label: "Load task",
         language: "python",
-        content:
-          "# load_orders: retries=2, schedule='@hourly'\ndf = (spark.read.table('bronze.orders_cdc')\n      .where(col('ingest_hour') == run_hour))\n\ndf.write.mode('append').saveAsTable('silver.orders')",
+        content: `# load_orders: retries=2, schedule='@hourly'
+df = (spark.read.table('bronze.orders_cdc')
+      .where(col('ingest_hour') == run_hour))
+
+df.write.mode('append').saveAsTable('silver.orders')`,
       },
       steps: [
-        "Names the most likely cause, a non-idempotent append rerun on the same interval. It gives a confidence level and the facts behind it.",
-        "Gives the decisive check: a duplicate-key count on silver.orders, matched against the retry and run history.",
+        "Names the most likely cause, a non-idempotent append rerun on the same interval. It gives a confidence level, the facts behind it, and what would disprove it.",
+        "Gives the decisive read-only check: a duplicate-key count on silver.orders, matched against the retry and run history.",
         "Proposes reversible containment. Pause exact-count consumers and quarantine the affected interval before any repair.",
         "Replaces the append with a deduplicated MERGE ordered by source sequence. It adds a replay plan, validation queries, and a rollback trigger.",
       ],
@@ -105,40 +110,40 @@ const STORIES: Record<string, ProductStory> = {
       {
         title: "Streaming and checkpoints",
         description:
-          "Treats checkpoints as production state. Covers watermarks, stateful operators, sink semantics, and backlog, and checks compatibility before stateful changes roll out.",
+          "Treats checkpoints as production state. Covers watermarks, state growth, backlog, and sink semantics, and separates engine fault tolerance from end-to-end exactly-once for external writes.",
       },
       {
         title: "Spark performance",
         description:
-          "Diagnoses from the Spark UI and physical plans: task skew, shuffle, spill, file layout, and OOM. No arbitrary repartition counts, forced broadcasts, or OPTIMIZE by habit.",
+          "Diagnoses from stage metrics and physical plans: skew, shuffle, spill, file layout, and memory pressure. No arbitrary partition counts, forced broadcasts, blind scaling, or untargeted table maintenance.",
       },
       {
-        title: "Backfill and replay",
+        title: "Microsoft Fabric and OneLake",
         description:
-          "Scoped, idempotent backfills with a defined source version, a concurrent-writer policy, validation before publish, and reconciliation after completion.",
+          "Lakehouse versus Warehouse choices, shortcuts versus physical copies, and medallion layers with explicit grain. Plans deployments knowing Lakehouse definitions don’t copy table data by default.",
       },
       {
-        title: "Data quality gates",
+        title: "dbt and warehouse models",
         description:
-          "Freshness, duplicate, null-key, and reconciliation checks. Each one has a threshold, an owner, and a block, quarantine, or warn action.",
+          "Incremental models with a unique key, late-arrival window, strategy, and full-refresh conditions. Adds grain, relationship, freshness, and reconciliation tests, without assuming unique_key enforces uniqueness.",
       },
     ],
     working: {
       provide: [
         "Error messages, driver or task logs, and Airflow task history",
         "Spark UI metrics or physical plans",
-        "Pipeline code, SQL, MERGE logic, and configs",
-        "Runtime, cloud, and version details",
+        "Pipeline code, SQL, dbt models, MERGE logic, and configs",
+        "Runtime, platform, and version details, such as Databricks, Fabric, or Airflow",
         "A timeline of what changed before the failure",
       ],
       expect: [
-        "A most likely cause with confidence and the decisive check",
-        "Reversible containment, kept separate from the permanent fix",
-        "Production-oriented SQL, PySpark, Databricks, or Airflow code",
+        "A most likely cause, a decisive check, and containment kept apart from the permanent fix",
+        "Production-oriented SQL, PySpark, dbt, or Airflow code",
         "Replay and backfill plans with validation and rollback",
+        "Data quality test matrices with thresholds, owners, and actions",
       ],
       limits:
-        "It can’t reach clusters, run jobs or queries, trigger Airflow, modify checkpoints, or run backfills. It works from the evidence you share and won’t call a fix verified without results.",
+        "It doesn’t reach clusters, run jobs or queries, trigger Airflow, change checkpoints, or run backfills on its own. It works from the evidence you share and won’t call a fix verified without results.",
     },
   },
   "production-rag-genai-copilot": {
@@ -148,9 +153,9 @@ const STORIES: Record<string, ProductStory> = {
     intro:
       "A production assistant for retrieval-augmented generation. It traces failures across ingestion, retrieval, reranking, context, and citations, and it prefers measured, reversible fixes to prompt tweaks.",
     about: [
-      "RAG & GenAI Copilot helps you design, debug, evaluate, and secure retrieval-augmented systems. It also covers observability, latency, and cost, plus choices between retrievers, rerankers, models, and vector stores.",
+      "RAG & GenAI Copilot helps you design, build, debug, evaluate, and secure retrieval-augmented systems. It also covers citation audits, production incidents, observability, latency, cost, legacy migrations, and choices between retrievers, rerankers, models, and vector stores.",
       "It’s meant for engineers who own a RAG system in production and need to explain why an answer was wrong, stale, unsupported, or shown to the wrong user.",
-      "It checks whether the right evidence reached the model before it blames the model. It won’t propose prompt-only fixes for corpus, chunking, indexing, or authorization problems. It won’t add agents or new vector databases without a measured need.",
+      "It checks whether the right evidence reached the model before blaming the model, and treats retrieved content as untrusted data, never as instructions. It won’t add rerankers, query rewriting, agents, or graph layers without proving their value.",
     ],
     workflow: {
       title: "Answers cite an archived refund policy",
@@ -159,13 +164,19 @@ const STORIES: Record<string, ProductStory> = {
       input: {
         label: "Retrieval trace",
         language: "yaml",
-        content:
-          "query: refund window for annual plans\nfilters: tenant_id=t_042\nretrieved:\n  - refund-policy-v3#12  score=0.81  status=archived\n  - refund-policy-v4#4   score=0.77  status=current\n  - billing-faq#2        score=0.64\ncontext_ids: [v3#12, v3#13, faq#2]\ncitation: v3#12",
+        content: `query: refund window for annual plans
+filters: tenant_id=t_042
+retrieved:
+  - refund-policy-v3#12  score=0.81  status=archived
+  - refund-policy-v4#4   score=0.77  status=current
+  - billing-faq#2        score=0.64
+context_ids: [v3#12, v3#13, faq#2]
+citation: v3#12`,
       },
       steps: [
-        "Walks the trace one boundary at a time: rewrite, retrieval, reranking, context, generation, citation.",
+        "Walks the trace one boundary at a time: filters, retrieval, reranking, context packing, generation, and citation mapping.",
         "Finds the first failure. The current policy was retrieved but dropped during context construction, so this is not a generation problem.",
-        "Recommends source precedence by status and effective version, with per-source caps, instead of a prompt instruction.",
+        "Recommends an explicit source precedence and version policy based on status and effective version, instead of a prompt instruction.",
         "Adds conflicting-source and stale-source cases to the eval set and checks citation correctness before rollout.",
       ],
       result:
@@ -173,24 +184,24 @@ const STORIES: Record<string, ProductStory> = {
     },
     expertise: [
       {
-        title: "Retrieval and chunking",
+        title: "Ingestion and retrieval",
         description:
-          "Lexical, vector, and hybrid retrieval, query rewrite, metadata filters, chunk boundaries, parent-child retrieval, and reranking, which can only reorder what was retrieved.",
+          "Covers parsing, chunking, stable IDs, and idempotent reindexing, plus lexical, vector, and hybrid search with metadata filters. Measures candidate recall before adding a reranker.",
       },
       {
         title: "Evaluation design",
         description:
-          "Evals that start from the product decision. Retrieval, context, and generation are scored separately, by slice, including no-answer cases. LLM-as-judge is one signal, not ground truth.",
+          "Evals that start from the product decision. Retrieval, context, generation, citations, and abstention are scored separately, by slice. Automated judges are paired with targeted human review.",
       },
       {
         title: "Security and authorization",
         description:
-          "Prompt injection, RAG poisoning, cross-tenant leakage, and exfiltration. Authorization is enforced at the retrieval boundary. Post-generation filtering is not a substitute.",
+          "Prompt injection, poisoned documents, cross-tenant leakage, and exfiltration through citations or URLs. Authorization is enforced before content reaches the model. Prompts and answer redaction are not access control.",
       },
       {
-        title: "Latency and cost",
+        title: "Production incident response",
         description:
-          "Per-stage tracing of retrieval, reranking, context size, tokens, and model calls. It optimizes the dominant stage without cutting top-k or context blindly.",
+          "Reversible, low-blast-radius containment such as reverting the last config or restricting a scope, with traces and index versions preserved. No destructive index rebuilds without a recovery plan.",
       },
     ],
     working: {
@@ -199,16 +210,16 @@ const STORIES: Record<string, ProductStory> = {
         "The prompt and the final context sent to the model",
         "Example queries with expected and actual answers",
         "Eval results, corpus details, and model or provider details",
-        "A description of the architecture and ingestion pipeline",
+        "Architecture and ingestion details, or the repository for code changes",
       ],
       expect: [
         "The dominant failing layer, with a confidence level",
-        "Ranked tests that confirm or rule out each hypothesis",
+        "The smallest test that confirms or rules out the leading hypothesis",
         "Eval plans with datasets, metrics, and regression gates",
-        "Architecture recommendations with trade-offs and what would invalidate them",
+        "Architecture and stack recommendations with trade-offs and a reversible pilot",
       ],
       limits:
-        "It can’t query your vector store, run retrieval or eval jobs, or change production systems. It reasons from the traces, configs, and results you share.",
+        "It can’t query your vector store, run retrieval or eval jobs, or change production systems on its own. It reasons from the traces, configs, and results you share, and labels unrun checks as unrun.",
     },
   },
   "cloud-platform-engineering-copilot": {
@@ -216,11 +227,11 @@ const STORIES: Record<string, ProductStory> = {
     subject: "Platform Engineering",
     tagline: "Platform changes with a known blast radius.",
     intro:
-      "A cloud and platform engineering assistant for Kubernetes, Terraform, CI/CD, GitOps, IAM, observability, and SRE. It reviews the manifests, plans, and logs you share and proposes the smallest reversible change.",
+      "A cloud and platform engineering assistant for Kubernetes, Terraform and OpenTofu, CI/CD, GitOps, IAM, networking, observability, and SRE. It reviews the manifests, plans, and logs you share and proposes the smallest reversible change.",
     about: [
-      "Platform Engineering Copilot helps you design, review, troubleshoot, and operate cloud platforms. It covers workload architecture, container platforms, infrastructure as code, delivery pipelines, identity and networking, reliability, and internal developer platforms.",
+      "Platform Engineering Copilot helps you design, review, troubleshoot, and operate cloud platforms. It covers architecture, Kubernetes, infrastructure as code, delivery, identity and networking, supply-chain security, reliability, cost and capacity, migrations, and internal developer platforms.",
       "It’s aimed at platform, infrastructure, and SRE engineers, and at teams working out how much platform they actually need.",
-      "It starts from the simplest architecture that meets the requirement. It won’t add Kubernetes, a service mesh, or multi-cloud without a concrete reason. Every high-risk change gets a defined scope, a dry run, validation signals, and a rollback trigger.",
+      "It starts from the simplest architecture that meets the requirement. It won’t add Kubernetes, a service mesh, or multi-cloud without a concrete reason. Every high-risk change gets a confirmed target, a preview where possible, an approval boundary, and a rollback or forward-fix path.",
     ],
     workflow: {
       title: "Pods restart in a loop during a database slowdown",
@@ -229,8 +240,15 @@ const STORIES: Record<string, ProductStory> = {
       input: {
         label: "Probe config and pod events",
         language: "yaml",
-        content:
-          "livenessProbe:\n  httpGet: { path: /healthz/deps, port: 8080 }\n  periodSeconds: 5\n  failureThreshold: 2\n\nEvents:\n  Warning  Unhealthy  Liveness probe failed: HTTP probe failed with statuscode: 503\n  Normal   Killing    Container api failed liveness probe, will be restarted\n  Warning  BackOff    Back-off restarting failed container api",
+        content: `livenessProbe:
+  httpGet: { path: /healthz/deps, port: 8080 }
+  periodSeconds: 5
+  failureThreshold: 2
+
+Events:
+  Warning  Unhealthy  Liveness probe failed: HTTP probe failed with statuscode: 503
+  Normal   Killing    Container api failed liveness probe, will be restarted
+  Warning  BackOff    Back-off restarting failed container api`,
       },
       steps: [
         "Finds the first failing boundary. The liveness probe calls a dependency check, so a slow database triggers restarts.",
@@ -243,14 +261,14 @@ const STORIES: Record<string, ProductStory> = {
     },
     expertise: [
       {
-        title: "Terraform change safety",
+        title: "Terraform and OpenTofu",
         description:
-          "Reviews plans by create, update, replace, and destroy. Keeps state protected and locked, pins providers and modules, and never uses -lock=false or force-unlock casually.",
+          "Reviews plans by create, update, replace, and destroy, plus backend, version constraints, and drift. Never bypasses state locks or calls an apply safe without plan evidence.",
       },
       {
-        title: "Delivery and GitOps",
+        title: "Delivery and supply chain",
         description:
-          "Build once and promote the same immutable artifact. Short-lived CI credentials, observable reconciliation, progressive delivery, and rollback that is actually operable.",
+          "Traces commit to build, artifact digest, promotion, and controller sync. Covers signatures, provenance, and SBOMs, and confirms live state after a rollback instead of assuming it.",
       },
       {
         title: "SLOs and observability",
@@ -258,15 +276,15 @@ const STORIES: Record<string, ProductStory> = {
           "SLIs drawn from user-visible behavior, error budgets, and alerts with owners and runbooks. OpenTelemetry-based traces, metrics, and logs without high-cardinality or secret-bearing labels.",
       },
       {
-        title: "Internal developer platforms",
+        title: "Identity and least privilege",
         description:
-          "Golden paths, self-service templates, and scorecards built around real developer journeys, with clear ownership and an escape hatch. A portal alone is not a platform.",
+          "Maps principal, resource, and action, credential lifetime, and workload identity federation. Reviews Kubernetes RBAC and pod privileges, and requires scope and approval for IAM or network changes.",
       },
     ],
     working: {
       provide: [
         "Kubernetes manifests, events, and describe output",
-        "Terraform code and plan output",
+        "Terraform or OpenTofu code and plan output",
         "CI/CD or GitOps pipeline definitions",
         "Incident timeline, logs, and dashboards",
         "SLOs, constraints, and cloud provider details",
@@ -274,11 +292,11 @@ const STORIES: Record<string, ProductStory> = {
       expect: [
         "Most likely cause, decisive check, containment, fix, and validation",
         "Architecture recommendations with trade-offs and a validation plan",
-        "Focused Terraform, Kubernetes YAML, Helm, or pipeline config",
+        "Focused Terraform or OpenTofu, Kubernetes YAML, or pipeline config",
         "Change plans with rollback triggers and post-change monitoring",
       ],
       limits:
-        "It can’t inspect cloud accounts, run kubectl or Terraform, change IAM or networking, or deploy workloads. It reviews what you share and won’t invent resource IDs or test results.",
+        "It can’t inspect cloud accounts, run kubectl or Terraform, change IAM or networking, or deploy workloads on its own. It reviews what you share and won’t invent resource IDs or test results.",
     },
   },
   "unix-copilot": {
@@ -364,11 +382,11 @@ ls: Logs/*.log: No such file or directory`,
     subject: "Web QA",
     tagline: "Release decisions backed by evidence, not optimism.",
     intro:
-      "Share a PR, test output, or screenshots. It identifies what’s broken, how severe it is, what evidence supports it, and whether the release should ship.",
+      "Share a PR, test output, screenshots, or a deployment plan. It identifies what’s broken, how severe it is, what evidence supports it, and whether the release should ship.",
     about: [
-      "Web App QA & Release Copilot is a release-readiness specialist for web applications. It covers functional QA, regression scope, bug triage, browser and responsive behavior, accessibility, performance, security, privacy, and deployment checks.",
-      "It’s for QA engineers, developers, and release owners deciding whether a build can ship. It reviews the PR, screenshots, test output, traces, and logs you share, and it doesn’t fix code unless you ask.",
-      "Every important finding is labeled as observed, automated evidence, source-supported, inferred, or needs verification. Severity runs from P0 to P3, and the final call is Ready, Ready with known limitations, or Not ready, with the reasons stated.",
+      "Web App QA & Release Copilot is a release-readiness specialist for web applications. Its workflows cover critical journeys, regression scope, bug and flaky-test triage, Playwright tests, visual and responsive checks, accessibility, performance, API and data integrity, security, CI, rollout, and post-release checks.",
+      "It’s for QA engineers, developers, and release owners deciding whether a build can ship. It reviews the PR, screenshots, test output, traces, and logs you share, and it doesn’t change app code unless you ask.",
+      "Findings are labeled observed, automated, source-supported, inferred, or unverified, with P0 to P3 severity. Every gate is marked pass, fail, unknown, or not applicable. Missing mandatory evidence means Not ready; the other verdicts are Ready and Ready with known limitations.",
     ],
     workflow: {
       title: "Finding release blockers in a session change",
@@ -387,34 +405,34 @@ ls: Logs/*.log: No such file or directory`,
   1 failed, 23 passed`,
       },
       steps: [
-        "Classifies the evidence. The WebKit failure is automated evidence. Any cookie or storage explanation stays inferred until confirmed.",
+        "Classifies the evidence. The WebKit failure is automated evidence. Any cookie or storage explanation stays inferred until a decisive reproduction confirms it.",
         "Triages the bug with expected and observed behavior, the smallest reproduction, P1 severity for an auth failure in a supported browser, auth/session as the likely layer, and the next decisive check.",
         "Scopes regression: login, logout, session expiry, and protected routes must be retested. Adjacent flows get targeted regression. Unrelated areas are marked out of scope.",
-        "Issues a verdict tied to the evidence, listing blockers, evidence still missing, rollback readiness, and what to monitor after deploy.",
+        "Marks each release gate pass, fail, or unknown, then issues a verdict listing blockers, evidence still missing, rollback readiness, and what to monitor after deploy.",
       ],
       result:
         "A release report with a Not ready or Ready verdict, a reproducible bug report, and a focused regression and smoke-test plan.",
     },
     expertise: [
       {
-        title: "Targeted regression",
+        title: "Playwright and flaky tests",
         description:
-          "Sorts each change into must retest, targeted regression, smoke only, or out of scope, instead of defaulting to a full regression pass.",
-      },
-      {
-        title: "Playwright test design",
-        description:
-          "Tests based on what users see, with role, label, and test ID locators, auto-retrying assertions instead of sleeps, failure traces, and extra browser projects only where required.",
+          "User-visible locators and web-first assertions instead of sleeps. Flaky failures are traced to shared state, timing, or locators, and retries or weaker assertions aren’t accepted as fixes.",
       },
       {
         title: "Accessibility review",
         description:
-          "Covers semantics, keyboard and focus, forms, live announcements, contrast, zoom, and motion. Automated scan results stay separate from the screen-reader checks that still need a person.",
+          "Covers semantics, keyboard and focus, forms, live announcements, contrast, reflow, and reduced motion. Automated scan results stay separate from the assistive-technology checks that still need a person.",
       },
       {
         title: "Performance evidence",
         description:
           "Reads Lighthouse and Core Web Vitals data, keeps lab and field evidence apart, and traces poor LCP, INP, or CLS to likely causes.",
+      },
+      {
+        title: "Rollout and post-release",
+        description:
+          "Checks migrations that can’t simply roll back, feature flags, staged rollout with abort thresholds, and post-deploy smoke flows. A successful deploy isn’t treated as proof of application health.",
       },
     ],
     working: {
@@ -429,10 +447,10 @@ ls: Logs/*.log: No such file or directory`,
         "Bug reports with reproduction, severity, likely layer, and a regression test",
         "Regression and smoke-test plans scoped to the change",
         "Playwright test code or review notes",
-        "Security and privacy findings marked as block release, must verify, or follow-up",
+        "Security and privacy findings that separate observed vulnerabilities from missing verification",
       ],
       limits:
-        "It doesn’t open browsers, run Playwright or Lighthouse, scan production, or deploy. Conclusions depend on the evidence you supply. Gaps are reported as needs verification, not assumed to pass.",
+        "It’s skills-only, with no browser, scanner, or deploy access of its own. It runs Playwright or browser checks only when your host provides those tools. Otherwise gaps are reported as unverified, never assumed to pass.",
     },
   },
   "llm-agent-builder-copilot": {
@@ -440,11 +458,11 @@ ls: Logs/*.log: No such file or directory`,
     subject: "LLM agents",
     tagline: "The simplest AI system that reliably does the job.",
     intro:
-      "Describe the AI feature you want to build. It picks the least complex architecture that works, then defines the tools, state, guardrails, approvals, and evals.",
+      "Describe the AI feature you want to build or the agent that’s misbehaving. It picks the least complex architecture that works, then defines the tools, state, guardrails, approvals, evals, and release gates.",
     about: [
-      "LLM & Agent Builder Copilot is a systems-design assistant for LLM applications, tool-using workflows, MCP integrations, and agents. It produces architectures, tool contracts, state designs, and eval plans, and writes implementation code when asked.",
+      "LLM & Agent Builder Copilot is a systems-design assistant for LLM applications, tool-using workflows, MCP integrations, and agents. It designs architectures, tool contracts, state, and evals, debugs failing runs from traces, plans SDK migrations, and writes code when asked.",
       "It’s for engineers and product teams building AI features that have to hold up in production, with bounded permissions, recoverable state, and traceable execution.",
-      "It starts by asking whether you need an agent at all. Each use case is placed on a scale from plain deterministic code to multi-agent, and complexity increases only when it adds measurable value.",
+      "It starts by asking whether you need an agent at all. Each use case is placed on a scale from deterministic code through single model calls, bounded tools, and workflows to multi-agent, and complexity increases only when it adds measurable value.",
     ],
     workflow: {
       title: "Designing a support agent with refund approvals",
@@ -474,14 +492,9 @@ autonomy: keep going until the customer is happy`,
     },
     expertise: [
       {
-        title: "Orchestration patterns",
+        title: "MCP integration design",
         description:
-          "Chooses among prompt chains, routers, parallel workers, orchestrator-worker, evaluator-optimizer, manager with specialists, and handoffs. Every loop gets a budget and a hard stop.",
-      },
-      {
-        title: "MCP server design",
-        description:
-          "Decides what belongs in a tool, a resource, or a prompt, then covers auth, schemas, long-running tasks, errors, and which spec version to verify against.",
+          "Decides what belongs in a tool, a resource, or a prompt, then covers authorization, schemas, optional UI and task extensions, and which spec version to verify against.",
       },
       {
         title: "Agent security",
@@ -489,15 +502,20 @@ autonomy: keep going until the customer is happy`,
           "Treats retrieved content and tool output as untrusted, and reviews prompt injection, data exfiltration, confused-deputy behavior, cross-tenant leakage, and excessive permissions.",
       },
       {
-        title: "Agent evaluation",
+        title: "Debugging agent runs",
         description:
-          "Ties each eval to a product decision and measures output, tool use, trajectory, and outcome. Deterministic graders come first, then calibrated LLM judges.",
+          "Classifies failures by step, such as context, planning, tool schema, auth, parser, state, or approval, and checks for duplicated writes, lost handoff context, and stale state.",
+      },
+      {
+        title: "Release gates",
+        description:
+          "Marks tests, evals, access controls, approval behavior, budgets, redaction, and rollback as passed, failed, not run, or not applicable, and fails closed when critical proof is missing.",
       },
     ],
     working: {
       provide: [
         "The user goal and what success looks like",
-        "Existing code, plus SDK and framework versions",
+        "Existing code, SDK and framework versions, and any traces or eval results",
         "The APIs and data sources the system can reach",
         "Which actions are consequential, such as sending, paying, deleting, or deploying",
         "Security, tenant, latency, or cost constraints",
@@ -506,10 +524,10 @@ autonomy: keep going until the customer is happy`,
         "A recommended system shape, with the reason it’s the simplest one that works",
         "Tool definitions with schemas, side effects, retries, and approval rules",
         "State and memory plans with clear ownership, retention, and reset behavior",
-        "Regression gates and a list of fields to trace for observability",
+        "Eval plans, trace fields, and a go/no-go release gate report",
       ],
       limits:
-        "It designs systems but doesn’t call external tools, deploy agents, or change external systems. Confirm version-sensitive SDK and MCP details against current official docs before you ship.",
+        "It’s skills-only, with no MCP server, agent runtime, or hosted backend. It doesn’t run agents, evals, or deployments unless your host provides authorized tools. Confirm version-sensitive SDK and MCP details against current official docs.",
     },
   },
   "software-data-ai-copilot": {
@@ -517,11 +535,11 @@ autonomy: keep going until the customer is happy`,
     subject: "Code & data",
     tagline: "Small, correct changes that respect your codebase.",
     intro:
-      "Share code, errors, or a change request. It follows your repository’s conventions to explain, debug, review, or implement changes, and gives you a plan to validate them.",
+      "Share code, errors, or a change request. It follows your repository’s conventions to explain, debug, review, implement, or migrate code, and marks every check as tested or not tested.",
     about: [
-      "Software & AI Copilot is an engineering assistant that starts from your repository. It explains, debugs, implements, reviews, refactors, tests, and migrates code across applications, data pipelines, ML, and LLM integrations.",
-      "It’s for engineers working in an existing codebase who want changes that fit. It reads instruction files such as AGENTS.md or CLAUDE.md, the nearby code, and the tests, and it follows the patterns it finds.",
-      "Its rule is the smallest correct change. Public APIs, schemas, and data contracts stay the same unless you ask to change them. It never adds dependencies, migrations, or architecture changes without telling you.",
+      "Software & AI Copilot is an engineering assistant that starts from your repository. It explains, debugs, implements, reviews, refactors, tests, and migrates code, with focused workflows for security, performance, incidents, releases, data pipelines, ML, notebooks, and LLM integrations.",
+      "It’s for engineers working in an existing codebase who want changes that fit. It reads the repository’s instruction files, the nearby code, manifests, and tests, and it follows the patterns it finds.",
+      "Its rule is the smallest coherent change. Public APIs, schemas, and data contracts stay the same unless you ask to change them. It never silently adds dependencies, services, migrations, or credentials, or restructures the architecture.",
     ],
     workflow: {
       title: "Reviewing a fix for double-counted revenue",
@@ -547,28 +565,28 @@ GROUP BY o.order_date;
         "Adds a regression test with a split-payment order and two orders of equal amount, plus a reconciliation check against order totals, and lists the commands to run.",
       ],
       result:
-        "A review verdict naming the blocking issue, a minimal patch that keeps the model’s output contract, and a regression test. Tests are listed as steps to run, never reported as passed.",
+        "A review verdict naming the blocking issue, a minimal patch that keeps the model’s output contract, and a regression test. Tests stay marked not tested until real output shows they pass.",
     },
     expertise: [
       {
-        title: "Code review",
-        description:
-          "Ranks correctness, security, contract breakage, concurrency, and tests ahead of style. Each issue comes with its location, consequence, and a concrete fix.",
-      },
-      {
-        title: "Data pipeline code",
-        description:
-          "Checks SQL, Spark, and ETL changes for grain, join cardinality, NULL handling, late data, retries that can safely run twice, and safe replay or backfill.",
-      },
-      {
         title: "Safe migrations",
         description:
-          "Plans additive schema changes, dual-format reads, feature flags, and staged rollouts, and decides between rollback and a forward fix before a risky deploy.",
+          "Picks expand-contract, a compatibility shim, staged dual reads and writes, or stop-and-migrate, with backfills that can run twice and no rollback promise once data is irreversibly changed.",
       },
       {
         title: "Notebook to production",
         description:
-          "Moves notebook logic into tested modules with configuration, entry points, input and output validation, and logging. Removes embedded secrets, hardcoded paths, and cell-order dependencies.",
+          "Moves notebook logic into tested modules with config, entry points, pinned dependencies, and logging, removes hidden state and embedded secrets, and checks parity against known-good outputs.",
+      },
+      {
+        title: "LLM integration hardening",
+        description:
+          "Treats model output and tool results as untrusted, adds typed outputs, bounded retries, and redaction, and tests malformed outputs, rate limits, cancellation, and unauthorized side effects.",
+      },
+      {
+        title: "Application security",
+        description:
+          "Checks authentication plus object and tenant authorization at each access boundary, input validation, and secret handling. Findings are concrete exploitable paths with negative tests, not generic lists.",
       },
     ],
     working: {
@@ -581,12 +599,12 @@ GROUP BY o.order_date;
       ],
       expect: [
         "A short plan naming the affected files and contracts",
-        "A focused patch or concrete edits",
+        "A focused patch, with each check marked tested or not tested",
         "Tests matched to the change, including a regression test for each fixed bug",
         "Review verdicts that separate blocking issues, important issues, and suggestions",
       ],
       limits:
-        "On its own it can’t inspect your repository, run tests, or edit files. It works from what you share or what your environment gives it access to, and it never reports tests as passing without real output.",
+        "It’s skills-only, with no connector, build service, or database access. It works from what you share or from coding tools your host provides, and it never reports tests as passing without real output.",
     },
   },
   "power-bi-report-builder-copilot": {
@@ -594,11 +612,11 @@ GROUP BY o.order_date;
     subject: "Power BI",
     tagline: "Find where the report goes wrong, then fix it.",
     intro:
-      "Power BI Report Copilot debugs paginated reports, DAX, Power Query, and Fabric designs from the files, code, screenshots, and errors you share. It returns copy-ready fixes with steps to validate them.",
+      "Power BI Report Copilot builds and debugs paginated reports, DAX, Power Query, semantic models, and Fabric designs from the files, code, screenshots, and errors you share. It returns copy-ready fixes with steps to validate them.",
     about: [
-      "It acts as a hands-on Power BI specialist for report developers, BI engineers, and analysts. It covers Report Builder and RDL, semantic models, DAX and Power Query, and Microsoft Fabric reporting architecture.",
-      "Bring it a specific broken thing: a parameter that won’t cascade, a total that doesn’t add up, a PDF with blank pages, a slow model. It defaults to Report Builder work and shifts to modeling or architecture when needed.",
-      "It checks correctness before speed. It finds the earliest layer where results go wrong, such as grain, filter context, or parameter mapping, instead of rewriting the report. Data visibility and security come ahead of layout and performance.",
+      "It acts as a hands-on Power BI specialist for report developers, BI engineers, and analysts. It covers Report Builder and RDL, exports and scheduled delivery, semantic models, DAX and Power Query, refresh, and Microsoft Fabric reporting architecture.",
+      "Bring it a specific broken thing: a parameter that won’t cascade, a total that doesn’t add up, a PDF with blank pages, a failed refresh, a slow model. It routes each to a focused workflow, defaulting to Report Builder for RDL work.",
+      "It checks correctness before speed. It finds the earliest layer where results go wrong, such as grain, filter context, or parameter mapping, and offers the smallest reversible fix. Security comes first, and an untested check is reported as not run, never as a pass.",
     ],
     workflow: {
       title: "A margin percentage that breaks at the total",
@@ -614,41 +632,41 @@ SUMX (
 )`,
       },
       steps: [
-        "Confirms the grain of the Sales table and the filter context at row and total level before touching the code.",
+        "Defines the expected result at row, group, and total level, then reconstructs the filter context from slicers, relationships, and the iterator before touching the code.",
         "Names the cause: the iterator adds up per-row ratios, so the total sums percentages instead of dividing aggregates.",
-        "Returns the working DAX first, built on small base measures for revenue and cost, then explains only the reasoning needed to defend it.",
-        "Ends with a short validation checklist, such as reconciling the total against source sums and testing it under slicers.",
+        "Returns minimally revised, copy-ready DAX built on small base measures for revenue and cost, then explains only the filter-context change needed to defend it.",
+        "Ends with a small synthetic test table and a validation checklist, such as reconciling the total against source sums and testing it under slicers.",
       ],
       result:
         "A corrected, copy-ready measure with a brief explanation and a checklist to confirm the numbers before the report goes back out.",
     },
     expertise: [
       {
-        title: "Paginated reports and RDL",
+        title: "Paginated reports and exports",
         description:
-          "Parameters and cascading filters, dataset mappings, tablix grouping and scope, VB expressions, page breaks, and PDF, Excel, and CSV export behavior.",
+          "Parameters and cascading filters, tablix grouping and VB expression scope, page geometry behind blank PDF pages, and how PDF, Excel, and CSV renderers differ.",
       },
       {
-        title: "Semantic models and DAX",
+        title: "Semantic models and Power Query",
         description:
-          "Star schemas, relationships and cardinality, date tables, measures versus calculated columns, filter context, and foldable Power Query that keeps identifiers and types intact.",
+          "Star schemas, grain, relationships and cardinality, date tables, and foldable Power Query that keeps identifiers with leading zeros and source types intact.",
       },
       {
-        title: "Fabric and performance",
+        title: "Fabric, refresh, and performance",
         description:
-          "Weighs Import, DirectQuery, Direct Lake, and composite models against your requirements. Locates the slow layer with evidence before suggesting any optimization.",
+          "Weighs Import, DirectQuery, and Direct Lake, plans incremental refresh boundaries, diagnoses failed refreshes, and locates the slow layer with evidence before suggesting any optimization.",
       },
       {
-        title: "Reporting security",
+        title: "Security and release checks",
         description:
-          "Sets the real authorization boundary with source security or RLS, minimizes sensitive fields, and secures export routes. Hiding a visual is never treated as security.",
+          "Treats source security or RLS as the real boundary, never a hidden visual. Plans recipient access for delivery and marks release gates passed only with observed evidence.",
       },
     ],
     working: {
       provide: [
         "RDL files or screenshots of the report design",
         "DAX, M, or SQL code",
-        "Exact error messages",
+        "Exact error messages or refresh history",
         "Model details such as tables, grain, and relationships",
         "The target output, such as PDF or Excel",
       ],
@@ -656,10 +674,10 @@ SUMX (
         "Exact Report Builder steps and settings",
         "Copy-ready SQL, DAX, M, or VB expressions",
         "Architecture recommendations with trade-offs",
-        "Validation checklists",
+        "Reconciliation and release checklists",
       ],
       limits:
-        "It doesn’t connect to Power BI, run reports, refresh models, or publish anything. It works from what you paste or upload, so share redacted examples and never credentials.",
+        "It doesn’t connect to Power BI, run reports, refresh models, or publish. It works from what you paste or upload, and runs checks only with tools your host provides. Share redacted examples, never credentials.",
     },
   },
   "technical-interview-copilot": {
@@ -667,11 +685,11 @@ SUMX (
     subject: "Interview prep",
     tagline: "Practice for the interview you actually have.",
     intro:
-      "Technical Interview Copilot reads your job description and resume, works out what you’re likely to be tested on, then runs realistic practice and gives honest feedback.",
+      "Technical Interview Copilot reads your job description and resume, works out what you’re likely to be tested on, then runs realistic practice one question at a time and gives honest, evidence-based feedback.",
     about: [
       "It’s an interview preparation partner for software, data, cloud, AI/ML, platform, mobile, QA, security, and architecture roles. It suits candidates at any level, from early career to staff, who have a specific role in front of them.",
-      "Use it to map a new role, study a topic at the right depth, cram before a call, or rehearse full rounds. It infers role family and seniority from your materials rather than asking you to pick a mode.",
-      "Unlike a general chat, it treats your resume as the limit of what you can claim. It won’t invent projects, metrics, or leadership. In mocks it asks one question at a time and holds back the ideal answer until you’ve tried.",
+      "Use it to map a new role, plan prep around the time you have, cram before a call, rehearse full rounds, interpret take-home instructions, or debrief after an interview. It infers role family and seniority from your materials.",
+      "It won’t invent projects, metrics, or leadership beyond your resume. It separates interview details you’ve confirmed from published guidance and assumptions, and treats any score as coaching, not a prediction of a hiring decision.",
     ],
     workflow: {
       title: "Preparing for a senior data engineering loop",
@@ -688,34 +706,34 @@ SUMX (
 Loop: recruiter screen, SQL, system design, behavioral`,
       },
       steps: [
-        "Maps the role: likely focus areas, top-priority topics, the resume claims an interviewer will probe, and a day-by-day order for the week.",
+        "Maps the role: likely focus areas, top-priority topics, the resume claims an interviewer will probe, and a realistic order for the week, flagging any topic inferred rather than listed in the posting.",
         "Plays the interviewer one question at a time. SQL covers grain, joins, NULLs, and date boundaries. Pipeline design follows up on late data, replay, and partial failures.",
         "Pressure-tests your real projects with questions on ownership, trade-offs, and what failed, without strengthening any claim beyond your resume.",
-        "After each section, gives what worked, what was weak, what an interviewer may infer, a stronger answer, and a readiness rating based on the mock.",
+        "After each section, gives what was correct, what was missing or wrong, what wasn’t assessed, the top correction with a stronger answer, and up to three targeted drills.",
       ],
       result:
         "A prioritized prep plan sized to your time, mock feedback with topics to review, and spoken answers in short and standard lengths built from your own experience.",
     },
     expertise: [
       {
-        title: "Role and level mapping",
+        title: "Coding rounds",
         description:
-          "Routes a job description to likely interview domains and adjusts depth by seniority, from fundamentals and debugging to system boundaries and cross-team trade-offs.",
+          "Simulates clarify, approach, code, tests, and complexity. Checks edge cases and communication, shows the smallest correction, and won’t reveal a full answer before you attempt it.",
       },
       {
-        title: "Coding and SQL rounds",
+        title: "Debugging and incident rounds",
         description:
-          "Simulates clarify, approach, code, test, and complexity. Checks correctness, edge cases, and communication, and won’t solve the problem before you attempt it.",
+          "Starts from a symptom with partial evidence and reveals logs or metrics only when you ask, probing containment, rollback, root cause, and prevention.",
       },
       {
-        title: "Role-specific system design",
+        title: "AI/ML and design rounds",
         description:
-          "Adapts design problems to the role: pipelines and replay for data, retrieval and evaluation for AI, state and accessibility for frontend, failure recovery for platform.",
+          "Probes leakage, evaluation, and drift for ML, and grounding, prompt injection, cost, and fallbacks for LLM systems. Design problems adapt to frontend, mobile, and platform roles.",
       },
       {
-        title: "Behavioral answers",
+        title: "Company and assessment rules",
         description:
-          "Shapes natural spoken answers from real events, checking context, ownership, reasoning, result, and learning. Offers honest ways to address gaps you haven’t covered directly.",
+          "Favors your recruiter’s instructions and official employer guidance over anecdotal reports, labeling uncertainty. Reads take-home rules first, and won’t produce a hidden submission if AI help is prohibited.",
       },
     ],
     working: {
@@ -724,16 +742,16 @@ Loop: recruiter screen, SQL, system design, behavioral`,
         "Your resume or a project summary",
         "Interview stage, format, and any assessment instructions",
         "How much time you have before the interview",
-        "Your practice answers or code",
+        "Practice answers, code, or notes from a past interview",
       ],
       expect: [
         "A prioritized interview map and prep order",
-        "Mock interviews with realistic follow-up questions",
-        "Scored feedback with stronger example answers",
-        "Time-boxed plans and final rapid-review notes",
+        "One-question-at-a-time mocks with realistic follow-ups",
+        "Feedback with stronger answers and targeted drills",
+        "Rapid-review notes and post-interview learning logs",
       ],
       limits:
-        "It works from what you share. Company-specific interview formats it can’t confirm are marked as assumptions, and it won’t write experience you don’t have.",
+        "It works from what you share; web research or code runs happen only if your host provides those tools. Company details it can’t confirm are marked as assumptions, and it won’t write experience you don’t have.",
     },
   },
   "product-app-architect": {
@@ -741,11 +759,11 @@ Loop: recruiter screen, SQL, system design, behavioral`,
     subject: "Product planning",
     tagline: "From rough idea to a buildable plan.",
     intro:
-      "Product & App Architect turns ideas, existing apps, and feature requests into focused product decisions, UX flows, architecture choices, and phased build plans. It recommends what to build first and what to leave out.",
+      "Product & App Architect turns ideas, existing apps, and feature requests into focused product decisions, UX flows, specs, architecture choices, and phased build plans. It recommends what to build first and what to leave out.",
     about: [
-      "It’s for anyone deciding what to build, how it should work, or how to structure it. It reads what you share and works out which kind of help you need, from discovery to an engineering handoff, without a long interview first.",
-      "It reasons product first. Problem, target user, alternatives, core value, and validation risk come before UX and architecture. It challenges scope by default, so accounts, AI, real-time systems, or microservices appear only when a real requirement calls for them.",
-      "It makes a recommendation instead of handing back an unranked list. It separates evidence from assumptions, asks at most three blocking questions, and states what would change its advice.",
+      "It’s for anyone deciding what to build, how it should work, or how to structure it. It reads what you share and routes to the right kind of help, from discovery and audits to metrics, data contracts, and an engineering handoff, without a long interview.",
+      "It reasons product first. Problem, target user, alternatives, core value, and validation risk come before UX and architecture. It challenges scope by default, so accounts, AI, billing, or microservices appear only when a real requirement calls for them.",
+      "It makes a recommendation instead of handing back an unranked list. It separates evidence from assumptions, asks a question only when a decision can’t proceed without it, and states what would change its advice.",
     ],
     workflow: {
       title: "Turning an app idea into an MVP plan",
@@ -754,14 +772,17 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       input: {
         label: "Product brief",
         language: "text",
-        content:
-          "Idea: an app for roommates to split chores fairly.\nWish list: accounts, reminders, chat, leaderboard, AI chore suggestions.\nUsers so far: us and a few friends who share flats.\nConstraints: two developers, web first, small budget.\nOpen question: do we need a mobile app at launch?",
+        content: `Idea: an app for roommates to split chores fairly.
+Wish list: accounts, reminders, chat, leaderboard, AI chore suggestions.
+Users so far: us and a few friends who share flats.
+Constraints: two developers, web first, small budget.
+Open question: do we need a mobile app at launch?`,
       },
       steps: [
-        "Frames the problem, target user, and current workaround, and marks each assumption as known, likely, unknown, or high-risk.",
+        "Frames the problem, target user, and current workaround. It separates what the team stated from what is researched or assumed, and ranks each assumption by risk.",
         "Defines the smallest complete loop, then sorts the wish list into must-have, later, and explicitly not building.",
-        "Proposes a cheap test for the riskiest assumption, with success and failure signals and the decision each one leads to.",
-        "Recommends the simplest architecture that fits, then lays out phases from setup to a first usable slice, hardening, and launch, each with acceptance criteria.",
+        "Proposes a cheap test for the riskiest assumption, with the expected signal, a failure condition, and the decision each outcome leads to.",
+        "Recommends the simplest architecture that fits, plus one credible alternative and when to revisit it. It then lays out milestones from a first vertical slice to launch, each with acceptance tests.",
       ],
       result:
         "A concise product plan: recommended direction, MVP scope with a not-now list, validation plan, architecture with trade-offs, and a phased build plan ready to hand to an engineer or coding agent.",
@@ -770,22 +791,22 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       {
         title: "Existing product audits",
         description:
-          "Reviews what already exists, keeps strengths worth preserving, finds friction and missing states, and recommends evolution over rewrites. Observations stay separate from inference.",
+          "Declares which surfaces it actually observed, walks the core user outcome, and ranks the three highest-leverage fixes. Prefers evolution over rewrites and keeps observation separate from inference.",
       },
       {
-        title: "Specs and feature deltas",
+        title: "Specs and API contracts",
         description:
-          "Writes lightweight briefs, full PRDs when alignment needs it, and feature delta specs for existing products, with observable acceptance criteria instead of vague goals like ‘fast’.",
+          "Feature delta specs and PRDs with stable requirement IDs mapped to acceptance tests, plus data ownership, permissions, idempotency, versioning, and error semantics for APIs.",
       },
       {
-        title: "UX flows and states",
+        title: "AI feature planning",
         description:
-          "Maps entry point, main action, feedback, and recovery for each key task. Covers empty, loading, error, permission, and offline states, with accessibility designed in from the start.",
+          "Compares a deterministic workflow before adding a model, then defines narrow AI responsibilities, validation, fallback, human review, evaluation sets, and latency and cost budgets.",
       },
       {
         title: "Launch readiness review",
         description:
-          "Checks security, privacy, accessibility, data, reliability, and platform requirements, then gives a ready, ready with known limitations, or not ready verdict.",
+          "Checks core loop, recovery states, data safety, accessibility, observability, and rollback. Verdicts are ready, ready with limitations, not ready, or not assessed, which never counts as a pass.",
       },
     ],
     working: {
@@ -798,59 +819,63 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       ],
       expect: [
         "A ranked product recommendation with MVP scope and a not-now list",
-        "PRDs, feature specs, and user stories with acceptance criteria",
-        "Architecture decisions with trade-offs and what would invalidate them",
-        "Phased build plans and engineering handoff briefs",
+        "UX flows with state tables, PRDs, and feature specs with acceptance criteria",
+        "Architecture decisions and data and API contracts with trade-offs",
+        "Measurement plans, phased build plans, and engineering handoff briefs",
       ],
       limits:
-        "It focuses on decisions and plans, not detailed implementation, and it can’t deploy or run anything. Checking current competitors or platform rules depends on web access in your chat.",
+        "It plans rather than builds: it doesn’t generate app code, deploy, or run a hosted service, and has no connectors of its own. Inspecting links or repositories and checking current competitors depend on the tools in your chat.",
     },
   },
   "job-outreach-copilot": {
     style: "planning",
     subject: "Job outreach",
-    tagline: "Honest outreach for the roles worth pursuing.",
+    tagline: "Find the right roles and pursue them honestly.",
     intro:
-      "Job Outreach Copilot checks a role against your actual experience, recommends one next step, and drafts a message you can send. It never adds experience, numbers, or status you haven’t given it.",
+      "Job Outreach Copilot supports a job search from finding roles and verified recruiters to fit checks, outreach, applications, tracking, and interview prep. It never adds experience, numbers, or status you haven’t given it.",
     about: [
-      "It’s for job seekers who want to spend effort on the right roles and send messages they can stand behind. It covers the path from a first job post to recruiter replies, interviews, and closing notes.",
+      "It’s for job seekers, and for people supporting several candidates, who want effort spent on the right roles. Each candidate’s profile, resume versions, messages, and tracker stay separate, so no one’s history or authorization leaks into another’s.",
       "Its defining rule is accuracy. Candidate facts, job facts, and conversation facts stay separate. Exposure never becomes ownership, a personal project never becomes employer experience, and compensation or work authorization is stated only as you supplied it.",
-      "In an ongoing recruiter thread, it keeps track of what’s already been asked and answered. Replies answer the recruiter’s question first and don’t repeat settled details or restart the analysis.",
+      "It treats drafts and actions as different things. A drafted note isn’t a sent message, and a prepared application isn’t a submitted one. Status changes only with your confirmation or a real receipt, and recruiter threads pick up where they left off.",
     ],
     workflow: {
-      title: "Evaluating a role and replying to a recruiter",
+      title: "Qualifying a recruiter’s role and drafting the reply",
       problem:
         "A recruiter has messaged about a contract role. The candidate wants to know if it’s worth pursuing and how to reply without overstating their experience.",
       input: {
         label: "Recruiter message and candidate notes",
         language: "text",
-        content:
-          "Recruiter: I came across your profile for a Senior Data Engineer contract role.\nMust have: 5+ years of Python, Airflow, and Snowflake in production.\nNice to have: Kafka, dbt. Hybrid, 3 days on-site. W2 only.\nAre you open to it, and what’s your expected rate?\n\nMy notes: Python and Airflow at my current job. Snowflake only in a personal project. No rate decided yet.",
+        content: `Recruiter: I came across your profile for a Senior Data Engineer contract role.
+Must have: 5+ years of Python, Airflow, and Snowflake in production.
+Nice to have: Kafka, dbt. Hybrid, 3 days on-site. W2 only.
+Are you open to it, and what’s your expected rate?
+
+My notes: Python and Airflow at my current job. Snowflake only in a personal project. No rate decided yet.`,
       },
       steps: [
-        "Separates what the job requires, what the profile supports, and what the recruiter actually asked.",
-        "Maps each must-have as supported, adjacent, unknown, or conflicting. Snowflake from a personal project stays adjacent, not production experience.",
-        "Classifies fit as Strong, Partial, or Weak and picks one action: proceed, qualify first, or skip, with the decisive reason.",
-        "Drafts a reply in the same thread that answers the recruiter’s question first, describes Snowflake accurately, and leaves the rate open instead of inventing a number.",
+        "Separates what the job requires, what the profile supports, and what the recruiter asked. Each must-have is mapped as supported, adjacent, unknown, or contradicted. Snowflake from a personal project stays adjacent.",
+        "Qualifies the terms. W2 only, three on-site days, and the rate are marked confirmed, advertised, or unknown against the candidate’s stated constraints. Where a constraint is missing, it asks at most one decisive question.",
+        "Classifies fit as strong, partial, unsuitable, or unknown and picks one action, proceed, qualify first, or skip, with the decisive reason. Missing nice-to-haves alone never rule the role out.",
+        "Drafts a reply in the same thread that answers the recruiter’s question first, describes Snowflake accurately, and leaves the rate open. The outreach is logged as drafted, not sent.",
       ],
       result:
-        "A short fit summary with the main gap and next action, plus a copy-ready recruiter reply. You review it and send it yourself.",
+        "A short fit and qualification summary with the main gap and next action, a copy-ready recruiter reply, and a tracker entry that stays drafted until you confirm it was sent.",
     },
     expertise: [
       {
-        title: "Channel-aware drafting",
+        title: "Role and recruiter research",
         description:
-          "Matches the message to the route: in-thread reply, LinkedIn connection note or DM, email, or InMail when requested. Uses only contact details you or the source provided.",
+          "With web access, finds open roles on employer and ATS pages and recruiters tied to the role, each with source and confidence. It never guesses email patterns.",
       },
       {
-        title: "Referrals and follow-ups",
+        title: "Truthful resume tailoring",
         description:
-          "Writes referral asks that are easy to decline, follow-ups shorter than the first message, and post-application notes that add signal instead of just saying you applied.",
+          "Reorders and rewords to match the job without adding skills, metrics, or ownership. Keeps exact titles and dates, and returns a change log and a gap list.",
       },
       {
-        title: "Interview-stage messages",
+        title: "Channel-aware outreach",
         description:
-          "Handles scheduling replies, confirmations, thank-you notes, status checks, and closing replies. Each stays short, and it never invents interviewers, formats, or discussion topics.",
+          "Defaults to a short LinkedIn invitation note for new contacts, drafts DMs only on request or in a live thread, and emails only verified contacts. Follow-ups stay shorter.",
       },
       {
         title: "Scam and privacy checks",
@@ -861,18 +886,19 @@ Loop: recruiter screen, SQL, system design, behavioral`,
     working: {
       provide: [
         "Your resume or profile, plus relevant experience it leaves out",
+        "Target roles, locations, and work arrangements if you want a search",
         "The job post, recruiter message, or a screenshot of the thread",
-        "Your constraints: location, work arrangement, employment type, compensation, and work authorization",
-        "Earlier messages in the conversation, so settled details aren’t repeated",
+        "Your constraints: employment type, compensation, and work authorization",
+        "Earlier messages and any existing tracker, so settled details aren’t repeated",
       ],
       expect: [
-        "A Strong, Partial, or Weak fit call with the decisive evidence",
-        "One recommended next action and the best channel",
-        "Copy-ready messages for the current stage",
-        "Short notes on real risks, such as a sponsorship conflict",
+        "A strong, partial, unsuitable, or unknown fit call with one next action",
+        "Source-linked role and recruiter leads, each with a confidence level",
+        "Copy-ready notes, emails, replies, and tailored resume text with a change log",
+        "Tracker entries and interview practice based only on confirmed events",
       ],
       limits:
-        "It drafts but never sends messages, submits applications, or connects to LinkedIn or email accounts. It doesn’t give legal advice on contracts or immigration, and it won’t claim experience your profile doesn’t show.",
+        "It has no built-in connectors. Searching for roles and recruiters needs web access in your chat. It sends, invites, or applies only with your explicit approval and a host tool that can, and gives no immigration legal advice.",
     },
   },
   "research-technical-writing-copilot": {
@@ -880,11 +906,11 @@ Loop: recruiter screen, SQL, system design, behavioral`,
     subject: "Research & writing",
     tagline: "Research you can trace, writing ready to publish.",
     intro:
-      "Research & Writing Copilot turns sources, notes, and drafts into technical articles, documentation, and reports whose key claims trace back to evidence. It shows uncertainty instead of hiding it, and never invents citations.",
+      "Research & Writing Copilot turns sources, papers, notes, and drafts into technical articles, documentation, reports, and literature reviews whose key claims trace back to evidence. It shows uncertainty instead of hiding it, and never invents citations.",
     about: [
-      "It’s for people who write technical and knowledge-heavy content that needs to hold up to scrutiny. It works out the task at hand, whether deep research, a fact-check, a comparison, an explainer, or a full article.",
-      "Fluent prose isn’t the goal. Every important claim is labeled as verified fact, source-reported claim, inference, opinion, unknown, or stale. Conflicting sources are compared by date, version, and scope rather than averaged into one number.",
-      "Research and presentation stay separate. One researched core can become a Medium story, a LinkedIn article or post, or a documentation page, while the facts underneath stay the same.",
+      "It’s for people who write technical and knowledge-heavy content that needs to hold up to scrutiny. It works out the task, whether deep research, a literature review, a fact-check, a refresh of an older piece, a comparison, or a full article.",
+      "Fluent prose isn’t the goal. Every important claim is labeled as verified, source-reported, inference, opinion, contradicted, stale, or unverified. Conflicting sources are compared by date, version, and scope rather than averaged into one number.",
+      "Research and presentation stay separate. One researched core can become a Medium story, a LinkedIn article or post, a developer blog, or a documentation page, and a final check confirms shorter versions don’t overstate the facts.",
     ],
     workflow: {
       title: "Turning several sources into a grounded article",
@@ -893,23 +919,32 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       input: {
         label: "Source notes",
         language: "text",
-        content:
-          "Topic: write-through vs write-behind caching for a read-heavy API\nAudience: backend engineers, practitioner level\nSource A: official docs for the cache product (version 7)\nSource B: vendor blog benchmark claiming 3x faster writes with write-behind\nSource C: forum thread reporting data loss on node failure\nTarget: company blog, then a LinkedIn post",
+        content: `Topic: write-through vs write-behind caching for a read-heavy API
+Audience: backend engineers, practitioner level
+Source A: official docs for the cache product (version 7)
+Source B: vendor blog benchmark claiming 3x faster writes with write-behind
+Source C: forum thread reporting data loss on node failure
+Target: company blog, then a LinkedIn post`,
       },
       steps: [
         "Defines the questions the article must answer and the claims that need verification before any drafting starts.",
-        "Builds a claim ledger tying each claim to its source, source type, version, and confidence. The vendor benchmark stays a source-reported claim, not a verified fact.",
+        "Builds a claim ledger tying each claim to its source, source type, version, and status. The vendor benchmark stays a source-reported claim, not a verified fact.",
         "Drafts for the stated audience: problem, mechanism, example, trade-offs and failure modes, then a decision rule, with citations next to the claims they support.",
-        "Runs an editing pass for accuracy, structure, and clarity, then adapts the core article into a LinkedIn post without changing the facts.",
+        "Runs a pre-publication review of sources, examples, and clarity, with findings marked blocking, important, or optional. Then it adapts the core article into a LinkedIn post without changing the facts.",
       ],
       result:
         "A publish-ready technical article with inline sources and visible caveats, plus a LinkedIn version built from the same researched core.",
     },
     expertise: [
       {
-        title: "Fact-checking drafts",
+        title: "Fact-checks and refreshes",
         description:
-          "Marks claims in an existing draft as supported, weak, stale, conflicting, or unsupported, then patches only what needs fixing while keeping the author’s voice and argument.",
+          "Marks claims in a draft or older piece as stale, conflicting, or unsupported, patches only those spans, and keeps the author’s voice. Untested code is labeled as such.",
+      },
+      {
+        title: "Literature reviews",
+        description:
+          "Verifies titles, authors, DOIs, and publication status, extracts design and limitations into an evidence matrix, and separates peer review from preprints and vendor reports. No invented results.",
       },
       {
         title: "Decision reports",
@@ -919,29 +954,24 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       {
         title: "Documentation and how-tos",
         description:
-          "Picks the right document type, from concept and tutorial to reference, troubleshooting, or migration guide, and writes procedures with prerequisites, steps, expected results, and validation.",
-      },
-      {
-        title: "Reader-first explainers",
-        description:
-          "Explains complex technical subjects at the right depth for the reader, defines terms before using them, and recommends only visuals that teach, such as diagrams or comparison tables.",
+          "Picks the right document type, from concept and tutorial to reference, migration guide, or runbook, and writes procedures with prerequisites, ordered steps, expected checks, and rollback.",
       },
     ],
     working: {
       provide: [
         "The topic, the question to answer, and the intended reader",
-        "Your source notes, links, files, or an existing draft",
+        "Your source notes, links, papers, files, or an existing draft",
         "The target format or publication, such as a company blog, Medium, or LinkedIn",
         "Any real experience or results you want included, since it won’t invent them",
       ],
       expect: [
-        "Research briefings with fact, inference, and uncertainty labeled",
-        "Technical articles, explainers, and documentation pages",
-        "Comparison and decision reports",
-        "Fact-checked revisions and platform-specific versions of one article",
+        "Research briefings with each claim labeled by evidence status",
+        "Technical articles, explainers, documentation pages, and research reports",
+        "Comparison reports and literature reviews with evidence matrices",
+        "Fact-check change logs, publication reviews, and platform versions of one article",
       ],
       limits:
-        "It doesn’t publish or submit anything. Checking current sources depends on web or file access in your chat. Without it, the work rests on what you provide, and unverifiable claims are marked as such.",
+        "No built-in connectors, and it doesn’t publish. Checking current sources, reading papers, and testing code depend on tools in your chat. Without them, it works from what you provide and marks unverifiable claims.",
     },
   },
   "seo-website-growth-copilot": {
@@ -949,11 +979,11 @@ Loop: recruiter screen, SQL, system design, behavioral`,
     subject: "SEO & growth",
     tagline: "Find where organic search actually breaks down.",
     intro:
-      "SEO & Growth Copilot diagnoses technical SEO, indexing, and organic traffic problems from the site evidence you share. It finds the first failing layer, labels what’s confirmed versus inferred, and never promises rankings.",
+      "SEO & Growth Copilot diagnoses technical SEO, indexing, migration, and organic traffic problems from the site evidence you share. It finds the first failing layer, labels each finding by evidence type, and never promises rankings.",
     about: [
-      "It’s a technical SEO and organic-growth specialist for people responsible for a website’s search performance. It covers crawling and indexing, Search Console analysis, site structure, search appearance, content strategy, and growth measurement.",
-      "It doesn’t treat every traffic drop as a content problem. It walks the chain from crawl, render, and index through ranking, impressions, clicks, and conversion, and starts with the first layer that fails.",
-      "Findings are labeled as observed, Search Console evidence, official guidance, inferred, needs verification, or experiment. It doesn’t invent keyword volume, claim causality from correlation, or recommend unsupported AI-search tricks.",
+      "It’s a technical SEO and organic-growth specialist for people responsible for a website’s search performance. It covers crawling, JavaScript rendering, indexing, Search Console analysis, site migrations, international sites, search appearance, content strategy, and growth measurement.",
+      "It doesn’t treat every traffic drop as a content problem. It walks the chain from discovery, crawl, render, index, and canonical choice through ranking, impressions, clicks, and conversion, and starts with the first layer that fails.",
+      "Findings are labeled as observed, direct platform evidence, official documentation, inferred, missing verification, or proposed experiment. It doesn’t invent keyword volume or Search Console data, claim causality from correlation, or treat special markup as a route into AI search results.",
     ],
     workflow: {
       title: "Investigating declining organic search traffic",
@@ -962,8 +992,11 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       input: {
         label: "Search Console audit notes",
         language: "text",
-        content:
-          "Last 3 months vs previous 3 months (web, all countries)\nClicks: down 34%. Impressions: down 6%. Avg position: roughly stable.\nBiggest losses: /guides/* pages, mostly on mobile.\nRedesign shipped mid-period: new guide template, new title format.\nSitemap: about 900 URLs, including some redirected guide URLs.",
+        content: `Last 3 months vs previous 3 months (web, all countries)
+Clicks: down 34%. Impressions: down 6%. Avg position: roughly stable.
+Biggest losses: /guides/* pages, mostly on mobile.
+Redesign shipped mid-period: new guide template, new title format.
+Sitemap: about 900 URLs, including some redirected guide URLs.`,
       },
       steps: [
         "Establishes the comparison context: date ranges, search type, filters, and whether totals come from the chart or from table rows.",
@@ -976,24 +1009,24 @@ Loop: recruiter screen, SQL, system design, behavioral`,
     },
     expertise: [
       {
-        title: "Indexing diagnosis",
+        title: "Indexing and rendering",
         description:
-          "Works through canonicals, robots and noindex, rendering, internal discovery, and sitemap status to explain why a page isn’t indexed, instead of repeatedly requesting indexing.",
+          "Works through canonicals, robots and noindex, JavaScript rendering, internal discovery, and sitemap status to find where indexing fails, using URL Inspection only when real access exists.",
       },
       {
-        title: "Structured data and metadata",
+        title: "Migrations and release gates",
         description:
-          "Designs schema markup that matches visible content and current search-feature support, and writes page-specific titles, descriptions, and Open Graph tags without promising how results will display.",
+          "Maps old URLs one to one, keeps canonicals, hreflang, and sitemaps intact, and marks each release check pass, fail, not run, or blocked. Missing checks never pass.",
       },
       {
-        title: "Content and internal linking",
+        title: "Content and site architecture",
         description:
-          "Finds content gaps from real queries and site inventory, flags cannibalization, and plans hub, contextual, and breadcrumb links that help users and crawlers, not keyword-stuffed footers.",
+          "Finds content gaps from real queries and site inventory, sorts pages into improve, consolidate, new, or no action, and gates programmatic page families with pilots and index rules.",
       },
       {
-        title: "Safer programmatic SEO",
+        title: "AI search visibility",
         description:
-          "Designs template page families with quality gates, index rules, canonical logic, and stop criteria, so only pages with distinct, useful data become indexable.",
+          "Reviews crawl access, answerable content, and entity clarity for Google’s AI features and Bing grounding. Treats them as built on standard search foundations, with no guaranteed placement.",
       },
     ],
     working: {
@@ -1001,17 +1034,17 @@ Loop: recruiter screen, SQL, system design, behavioral`,
         "Search Console exports or screenshots, with date ranges and filters",
         "URLs, rendered HTML, or the site repository",
         "Crawl exports, sitemap, and robots.txt",
-        "Known releases, migrations, or template changes",
+        "Planned or past migrations, releases, and template changes",
         "Conversion or analytics data, if you want results tied to outcomes",
       ],
       expect: [
         "Technical SEO audits ordered by impact and confidence",
         "Search Console analyses that separate evidence from inference",
         "Structured data, metadata, and internal-linking plans",
-        "Measurement and experiment plans for organic growth",
+        "Migration plans, go or no-go release checklists, and measurement plans",
       ],
       limits:
-        "It doesn’t connect to Search Console, analytics, your CMS, or a crawler. It works from data you share, plus web access if your chat has it, and it can’t guarantee rankings or rich results.",
+        "It has no connectors to Search Console, analytics, your CMS, or a crawler. It works from data you share, plus whatever web, browser, or code tools your chat provides, and can’t guarantee rankings or rich results.",
     },
   },
   imago: {
@@ -1019,11 +1052,11 @@ Loop: recruiter screen, SQL, system design, behavioral`,
     subject: "Visual design",
     tagline: "From brief to finished visual, without prompt writing.",
     intro:
-      "Imago turns briefs, reference images, screenshots, documents, and data into posters, infographics, UI concepts, and edits, using ChatGPT’s built-in image generation and editing.",
+      "Imago turns briefs, reference images, screenshots, documents, and data into posters, product visuals, icons, infographics, UI concepts, and edits, using the image generation and editing built into ChatGPT.",
     about: [
       "Imago is a visual-first creative and information-design copilot. It suits marketers, designers, founders, and anyone who needs a finished visual rather than advice about one.",
-      "It handles four kinds of work: new visuals, edits to supplied images, restyles of a source image, and information design from documents or data. The images come from ChatGPT’s image tools. Imago supplies the method around them.",
-      "Where a normal chat might hand back a prompt, Imago produces the image. It infers routine choices like aspect ratio, asks only about truly blocking gaps, and changes only what you ask for during edits.",
+      "It handles new visuals, edits to supplied images, reference-driven work, storyboards, and information design from documents or data. Imago runs no image service of its own. The images come from ChatGPT’s image tools, and Imago supplies the method around them.",
+      "Where a chat might return a prompt, Imago produces the image and writes prompts only on request. It infers routine choices like aspect ratio, changes only what you name during edits, and reviews the output when it can see it.",
     ],
     workflow: {
       title: "Developing a poster for an open studio event",
@@ -1032,38 +1065,41 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       input: {
         label: "Creative brief",
         language: "text",
-        content:
-          "Poster for our open studio weekend.\nHeadline, exactly: ‘Open Studio Weekend’\nSubline: ‘Clay & Kiln Co-op’\nMood: warm, handmade, earthy palette.\nUse the attached wheel-room photo for composition only.",
+        content: `Poster for our open studio weekend.
+Headline, exactly: ‘Open Studio Weekend’
+Subline: ‘Clay & Kiln Co-op’
+Mood: warm, handmade, earthy palette.
+Use the attached wheel-room photo for composition only.`,
       },
       steps: [
         "Classifies the job as a new visual and treats the attached photo as a composition reference, not as content to copy.",
-        "Locks the hard constraints: the exact headline and subline, a portrait format suited to a poster, and the earthy palette.",
-        "Generates the poster with ChatGPT’s image tool, making routine layout and type choices without a questionnaire.",
-        "Refines through feedback. The accepted version becomes the baseline, and each round changes only what you name, such as a warmer background, while protecting the text.",
+        "Locks the hard constraints: the exact headline and subline, a portrait format suited to a poster, and the earthy palette, without adding dates or claims you didn’t ask for.",
+        "Generates the poster with ChatGPT’s image tool, reserving text-safe zones and making routine layout and type choices without a questionnaire.",
+        "Checks the rendered spelling and hierarchy, then refines through feedback. The accepted version becomes the baseline, and each round changes only what you name, such as a warmer background.",
       ],
       result:
         "A finished poster image in the conversation, then revised versions as you give feedback. Your exact wording is treated as a hard requirement throughout.",
     },
     expertise: [
       {
-        title: "Creating from briefs",
-        description:
-          "Posters, infographics, UI concepts, social graphics, slides, storyboards, and concept art, with aspect ratio inferred from the intended use when you don’t specify one.",
-      },
-      {
         title: "Faithful image edits",
         description:
           "Changes the requested element and preserves identity, product geometry, composition, lighting, and text. Each reference keeps a distinct role: subject, style, composition, or layout.",
       },
       {
-        title: "Text and layout",
+        title: "Product and brand visuals",
         description:
-          "Uses your exact wording, capitalization, and numbers, keeps a clear hierarchy, and splits dense content across visuals when one canvas would be illegible.",
+          "Mockups and packaging concepts that keep supplied shapes and labels, plus icon concepts built for small sizes. A rendered PNG is never presented as editable vector art.",
+      },
+      {
+        title: "UI concepts and storyboards",
+        description:
+          "Redesigns supplied screenshots as static concepts that keep the real content, and renders storyboard frames with consistent characters, props, and palette across the sequence.",
       },
       {
         title: "Data-true visuals",
         description:
-          "Builds charts and infographics from your real values or verified sources. It never invents statistics, dates, or quotes, and doesn’t imply precision the data lacks.",
+          "Builds charts and infographics from your values or verified sources, keeping an evidence ledger for current facts. It never invents statistics, dates, or quotes.",
       },
     ],
     working: {
@@ -1081,7 +1117,7 @@ Loop: recruiter screen, SQL, system design, behavioral`,
         "Revisions that keep the accepted direction",
       ],
       limits:
-        "Imago depends on ChatGPT’s image generation and editing. If those aren’t available, it says so plainly rather than faking a result. It can’t inspect files or links you haven’t shared, and it won’t invent data.",
+        "Imago depends on ChatGPT’s image generation and editing; if those aren’t available, it says so rather than faking a result. Output is a rendered image, not an editable design file, and it can’t inspect files you haven’t shared.",
     },
   },
   "atelier-pottery-mentor": {
@@ -1102,8 +1138,11 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       input: {
         label: "What you describe",
         language: "text",
-        content:
-          "Mid-range stoneware, electric kiln, fired to cone 6.\nCommercial satin glaze, dipped, two coats.\nSmall pinholes on the outside of three mugs.\nMugs from the top shelf came out clean.\nNo witness cones in this firing.",
+        content: `Mid-range stoneware, electric kiln, fired to cone 6.
+Commercial satin glaze, dipped, two coats.
+Small pinholes on the outside of three mugs.
+Mugs from the top shelf came out clean.
+No witness cones in this firing.`,
       },
       steps: [
         "Separates observation from inference. The pinholes are visible, but the heatwork on each shelf is unknown because no witness cones were used.",
@@ -1152,6 +1191,223 @@ Loop: recruiter screen, SQL, system design, behavioral`,
       ],
       limits:
         "It can’t see your kiln, handle your pots, or test your glazes. It works from your photos and notes, its previews are concepts rather than predictions, and it won’t guarantee firing outcomes or food safety.",
+    },
+  },
+  "build-mcp-apps-agents": {
+    style: "technical",
+    subject: "MCP",
+    tagline: "Build MCP tools and interactive apps for AI hosts.",
+    intro:
+      "A skills-only plugin for designing, building and testing Model Context Protocol servers, tool contracts and MCP App interfaces. It starts from an idea, API documentation or an existing MCP repository.",
+    about: [
+      "Build MCP Apps & Agents helps design, implement and test Model Context Protocol servers, tool contracts and host-aware interfaces. It works from a new idea, API documentation or an MCP repository you already have.",
+      "It’s for developers and teams who extend AI assistants with interoperable tools. One of its first decisions is whether a tool-only server is enough or whether the workflow benefits from a rendered MCP App interface.",
+      "Its workflows cover architecture, typed tools, resources, security, client compatibility, UI quality, debugging and release preparation. It writes and tests code only when the host provides real coding tools. Otherwise it gives you a plan you can act on.",
+    ],
+    workflow: {
+      title: "Turning a task-management API into an interactive MCP App",
+      problem:
+        "A team has a task-management REST API and wants people to browse and update tasks from inside an AI assistant. They haven’t decided which endpoints should become tools, or whether a UI is worth building.",
+      input: {
+        label: "API description",
+        language: "yaml",
+        content: `# Tasks API (excerpt)
+GET   /projects/{id}/tasks   ?status=&assignee=
+POST  /projects/{id}/tasks   { title, due, assignee }
+PATCH /tasks/{id}            { status: open | done }
+auth:  OAuth, scopes tasks.read and tasks.write
+users: team leads triaging work in chat
+hosts: ChatGPT`,
+      },
+      steps: [
+        "Turns the API into a small set of focused tools, such as listing tasks and updating a task’s status. Each tool gets a typed schema, a permission scope and a readable response.",
+        "Designs the server and decides whether a ui:// interface helps with browsing tasks, or whether tool-only responses are enough.",
+        "Implements the interface and a tool-only fallback with current supported SDK patterns.",
+        "Validates protocol behavior, security boundaries around write actions and client compatibility, where the host provides test tools.",
+      ],
+      result:
+        "A structured MCP project with an optional interactive UI, plus integration or testing guidance based on evidence. Tests are reported as passed only when they actually ran.",
+    },
+    expertise: [
+      {
+        title: "MCP server design",
+        description:
+          "Chooses tools, resources, transports, schemas and response contracts, and keeps each tool focused, with a response people can read.",
+      },
+      {
+        title: "Interactive MCP Apps",
+        description:
+          "Designs interfaces that work inside the host’s sandbox, with useful loading, error and empty states, plus a tool-only fallback when a rendered UI doesn’t help.",
+      },
+      {
+        title: "Security and authentication",
+        description:
+          "Reviews authorization, permission scopes, external calls and sensitive tool actions.",
+      },
+      {
+        title: "Debugging and compatibility",
+        description: "Investigates server failures, differences between hosts and SDK upgrades.",
+      },
+    ],
+    working: {
+      provide: [
+        "An idea, or a description of what the tools should do",
+        "API documentation or an existing MCP repository",
+        "The intended users and the actions they need",
+        "Supported hosts and any authentication requirements",
+      ],
+      expect: [
+        "Tool names, schemas and permission scopes",
+        "A server design with an optional ui:// interface",
+        "Implementation files and test results when the host supplies coding tools",
+        "A clear, actionable plan when it doesn’t",
+      ],
+      limits:
+        "It’s a skills-only plugin. It has no hosted MCP service, no built-in code runner, no independent agents and no guaranteed deployment. Writing, running and testing code depend on the tools your host provides.",
+    },
+  },
+  "web-mobile-app-builder": {
+    style: "technical",
+    subject: "App development",
+    tagline: "Web and mobile apps with a considered design.",
+    intro:
+      "A skills-only plugin for creating or improving websites, full-stack apps, PWAs and native or cross-platform mobile apps. It pairs architecture suited to each platform with a clear visual system, realistic states and testing.",
+    about: [
+      "Web & Mobile App Builder combines product discovery, visual direction, application architecture and implementation guidance. It handles the different constraints of websites, installable web apps, SwiftUI apps for iOS and macOS, Android apps and cross-platform projects.",
+      "It’s for founders, designers and developers who are starting a new application or improving an existing one. You can begin from an idea, a screenshot, a Figma reference, a product brief or a repository.",
+      "Its focus is design quality grounded in reference research. That means a deliberate visual system, usable states, accessible interactions and independent verification, not one generic template applied to every app.",
+    ],
+    workflow: {
+      title: "An inspection app that has to work without signal",
+      problem:
+        "A team needs a field-work app for inspectors who often lose signal on site. Records entered offline have to survive and sync later, and the app has to stay usable on a phone outdoors.",
+      input: {
+        label: "Feature brief",
+        language: "text",
+        content: `App:        site inspection log (installable web app)
+Users:      field inspectors, office reviewers
+Devices:    mid-range Android phones, used outdoors
+Core tasks: start an inspection, add notes and photos, submit
+Offline:    full form entry with no signal, sync when back online
+Edge case:  an office edit to a record that is still pending sync
+Brand:      existing logo and a navy palette`,
+      },
+      steps: [
+        "Chooses a PWA approach for this brief and maps the essential journeys: starting an inspection, adding notes and photos, and submitting.",
+        "Sets the visual direction, typography, layout tokens and responsive interaction states, sized for phone use in the field.",
+        "Implements the core data entry and offline behavior with the project tools available in the host.",
+        "Reviews accessibility, the sync and recovery states, and evidence from real browser tests before handoff.",
+      ],
+      result:
+        "A project structure and implementation, a visual system and realistic interface states. QA results are documented where execution was available.",
+    },
+    expertise: [
+      {
+        title: "Progressive web apps",
+        description:
+          "Plans installability, offline caching and sync, including what users see while offline and when a sync needs recovering.",
+      },
+      {
+        title: "Visual direction",
+        description:
+          "Sets typography, layout tokens and responsive interaction states based on reference research, so each app gets its own visual system instead of a generic template.",
+      },
+      {
+        title: "Native and cross-platform",
+        description:
+          "Uses SwiftUI for iOS and macOS, or Kotlin and Compose for Android. It uses Expo or React Native when a shared stack is justified.",
+      },
+      {
+        title: "Visual and technical QA",
+        description:
+          "Reviews design fidelity, accessibility, security, performance and regression evidence before handoff.",
+      },
+    ],
+    working: {
+      provide: [
+        "An idea, a product brief or an existing repository",
+        "Screenshots or Figma references",
+        "User roles, core tasks and device constraints",
+        "Offline needs and any existing brand or UI references",
+      ],
+      expect: [
+        "A build plan for the right platform",
+        "Working code where the host’s tools permit",
+        "A visual system with realistic interface states",
+        "Explicit visual and functional checks",
+      ],
+      limits:
+        "It doesn’t include a hosted app-building backend. Builds, simulators, browser tests and deployment depend on the execution tools and permissions your host provides.",
+    },
+  },
+  "design-game-studio": {
+    style: "creative",
+    subject: "Game development",
+    tagline: "Turn a game idea into a playable slice.",
+    intro:
+      "A game-development plugin that turns an idea into a small project you can play. It picks a suitable engine, designs the core loop and art direction, and checks controls, collisions and restart with the tools your host provides.",
+    about: [
+      "Design Game Studio helps plan, build, improve and test 2D, 3D, browser, narrative and mobile games. It covers engine choice, game design, art direction, levels, gameplay systems, audio, debugging, playtesting and release handoffs.",
+      "It’s for game creators, indie developers and teams who want a working game, not just a design document. When you ask for a build, it hands the work to an engine-specific workflow instead of stopping at a plan.",
+      "It starts with the smallest playable loop: a goal, a challenge, feedback, a win or loss, and a restart. Large maps, shops and progression wait until that loop works. It never calls a game tested without recorded evidence.",
+    ],
+    workflow: {
+      title: "A rooftop platformer from a short brief",
+      problem:
+        "Someone has an idea for a small browser platformer. They want something they can play on a laptop or a phone, not a long design document.",
+      input: {
+        label: "Game brief",
+        language: "text",
+        content:
+          "A paper lantern hops across night rooftops to relight the town. It should play in desktop and phone browsers, with flat 2D shapes and a warm glow against a dark blue sky. Light all five lamps and reach the chimney before the wind puts you out.",
+      },
+      steps: [
+        "Fills in a playable brief: the player’s action, the challenge, feedback, win and lose conditions, and restart. Then it records why Phaser, its default for 2D browser games, fits.",
+        "Scopes the first vertical slice: one level with movement, jumping, lamps, wind gusts, win and lose, restart, pause and a sound toggle. Extra levels and progression wait.",
+        "Sets the art direction around a few visual pillars, a palette and readable silhouettes for hazards. It uses simple placeholders until licensed assets are ready, and records where each asset came from.",
+        "Where tools exist, it builds with the project’s scripts and runs a browser smoke test with real key and touch input. It checks console errors, jump gaps, restart, focus loss and resizing.",
+      ],
+      result:
+        "An editable Phaser project with source, setup steps, controls, an asset and license list, and an evidence report of passed, failed and not-run checks. Without execution tools, you get source files and run instructions marked as unverified.",
+    },
+    expertise: [
+      {
+        title: "Engine selection",
+        description:
+          "Phaser for 2D browser games, PlayCanvas for code-first web 3D, Godot for standalone indie projects and Ren’Py for visual novels. Existing Unity or Unreal projects stay where they are.",
+      },
+      {
+        title: "Core loop design",
+        description:
+          "Defines player actions, game states and difficulty using parameters you can observe, such as speed and spawn counts. Whether the game is fun is left to human playtesters.",
+      },
+      {
+        title: "Art and asset rights",
+        description:
+          "Visual pillars, palette and readable silhouettes, with an asset register that records each file’s origin and license. It won’t copy protected characters, levels or soundtracks.",
+      },
+      {
+        title: "Evidence-based playtesting",
+        description:
+          "Separates designed, implemented, run and actually played. A passing build isn’t treated as proof of playability, and fixes go through a bounded fix-and-retest loop.",
+      },
+    ],
+    working: {
+      provide: [
+        "A short game idea or premise",
+        "The target platform and input method",
+        "A preferred art style or reference images",
+        "Your own assets, with usage rights",
+        "An existing project, for changes or bug fixes",
+      ],
+      expect: [
+        "A scoped first playable slice and an engine decision",
+        "Editable source, setup steps and controls",
+        "An asset list with the origin and license for each file",
+        "An evidence report of passed, failed and not-run checks",
+      ],
+      limits:
+        "It’s a skills-only plugin, with no cloud game engine, hosted previews or asset generation service. Building, running and testing depend on the coding, browser and engine tools your host provides. Only human players can judge fun.",
     },
   },
 };

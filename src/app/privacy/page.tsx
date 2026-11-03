@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDocument, type LegalSection } from "@/components/layout/LegalDocument";
-import { SUPPORT_EMAIL } from "@/lib/site";
+import { SHARE_IMAGE, SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "How Tekris Labs handles information across its website and products.",
   alternates: { canonical: "/privacy" },
-  openGraph: { url: "/privacy" },
+  openGraph: { url: "/privacy", images: [SHARE_IMAGE] },
 };
 
 const sections: LegalSection[] = [

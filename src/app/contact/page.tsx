@@ -3,7 +3,7 @@ import { ContactForm } from "@/components/ContactForm";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EMPTY_VALUES, isInquiryType, type ContactValues } from "@/lib/contact";
 import { getProduct, products } from "@/lib/products";
-import { HELLO_EMAIL, SUPPORT_EMAIL } from "@/lib/site";
+import { HELLO_EMAIL, SHARE_IMAGE, SUPPORT_EMAIL } from "@/lib/site";
 
 export const maxDuration = 60;
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description:
     "Contact Tekris Labs for product support, privacy questions, feedback, and general inquiries.",
   alternates: { canonical: "/contact" },
-  openGraph: { url: "/contact" },
+  openGraph: { url: "/contact", images: [SHARE_IMAGE] },
 };
 
 const options = [

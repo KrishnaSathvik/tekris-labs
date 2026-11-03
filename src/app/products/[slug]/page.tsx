@@ -7,6 +7,7 @@ import { ProductIcon } from "@/components/products/ProductIcon";
 import { ProductWorkflow } from "@/components/products/ProductWorkflow";
 import { getProductStory } from "@/lib/product-stories";
 import { CATEGORY_LABELS, getProduct, products, type Product } from "@/lib/products";
+import { SHARE_IMAGE } from "@/lib/site";
 
 export const dynamicParams = false;
 
@@ -27,7 +28,7 @@ export async function generateMetadata(props: PageProps<"/products/[slug]">): Pr
       url: path,
       title: `${product.name} — Tekris Labs`,
       description: product.summary,
-      images: [{ url: product.icon, alt: `${product.name} icon` }],
+      images: [SHARE_IMAGE],
     },
   };
 }

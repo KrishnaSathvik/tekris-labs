@@ -166,11 +166,35 @@ export const products: Product[] = [
   {
     slug: "job-outreach-copilot",
     name: "Job Outreach Copilot",
-    summary: "Evaluate job opportunities and draft recruiter outreach and follow-ups.",
+    summary: "Find and qualify roles, then draft truthful recruiter outreach and follow-ups.",
     category: "productivity",
     platform: "chatgpt",
     listingUrl: "https://chatgpt.com/plugins/plugins_6ab406f25d6881918965f198eaa43903",
     icon: "/products/job-outreach-copilot.svg",
+  },
+  {
+    slug: "build-mcp-apps-agents",
+    name: "Build MCP Apps & Agents",
+    summary: "Design, build and test MCP servers, tool contracts and interactive MCP Apps.",
+    category: "developer-tools",
+    platform: "chatgpt",
+    icon: "/products/build-mcp-apps-agents.png",
+  },
+  {
+    slug: "web-mobile-app-builder",
+    name: "Web & Mobile App Builder",
+    summary: "Plan and build websites, PWAs and mobile apps with a considered visual system.",
+    category: "developer-tools",
+    platform: "chatgpt",
+    icon: "/products/web-mobile-app-builder.png",
+  },
+  {
+    slug: "design-game-studio",
+    name: "Design Game Studio",
+    summary: "Turn a game idea into a small, playable 2D or 3D project.",
+    category: "creative-learning",
+    platform: "chatgpt",
+    icon: "/products/design-game-studio.png",
   },
 ];
 

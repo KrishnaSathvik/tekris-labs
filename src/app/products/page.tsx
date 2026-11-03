@@ -3,13 +3,14 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProductCatalog } from "@/components/products/ProductCatalog";
 import { getCategoriesInUse, products } from "@/lib/products";
+import { SHARE_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Products & Tools",
   description:
     "Explore software products, development tools, and creative utilities from Tekris Labs.",
   alternates: { canonical: "/products" },
-  openGraph: { url: "/products" },
+  openGraph: { url: "/products", images: [SHARE_IMAGE] },
 };
 
 export default function ProductsPage() {

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { ArrowIcon, Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { SHARE_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: { absolute: "About Tekris Labs" },
   description: "What Tekris Labs stands for and how it approaches building software.",
   alternates: { canonical: "/about" },
-  openGraph: { url: "/about", title: "About Tekris Labs" },
+  openGraph: { url: "/about", title: "About Tekris Labs", images: [SHARE_IMAGE] },
 };
 
 const beliefs = [
