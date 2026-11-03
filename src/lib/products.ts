@@ -178,6 +178,7 @@ export const products: Product[] = [
     summary: "Design, build and test MCP servers, tool contracts and interactive MCP Apps.",
     category: "developer-tools",
     platform: "chatgpt",
+    listingUrl: "https://chatgpt.com/plugins/plugins_6ae8cbe5a6708191b99fec2318f2e009",
     icon: "/products/build-mcp-apps-agents.png",
   },
   {
@@ -186,6 +187,7 @@ export const products: Product[] = [
     summary: "Plan and build websites, PWAs and mobile apps with a considered visual system.",
     category: "developer-tools",
     platform: "chatgpt",
+    listingUrl: "https://chatgpt.com/plugins/plugins_6ae8cc5ee77c81918ab31ed7701a28de",
     icon: "/products/web-mobile-app-builder.png",
   },
   {
@@ -194,6 +196,7 @@ export const products: Product[] = [
     summary: "Turn a game idea into a small, playable 2D or 3D project.",
     category: "creative-learning",
     platform: "chatgpt",
+    listingUrl: "https://chatgpt.com/plugins/plugins_6aea3d430b4c8191a4423700cf3bc0fa",
     icon: "/products/design-game-studio.png",
   },
 ];
